@@ -10,7 +10,7 @@ Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="RailSight Core Engine")
 
-# This allows your web browser to access the API safely from anywhere
+# This block allows your index.html page to safely fetch data across the web
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -18,6 +18,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.get("/")
+def home():
+    return {"status": "RailSight API is Live"}
 
 @app.get("/api/transit-matrix", response_model=List[schemas.CommuterTransitWindow])
 def get_transit_matrix(db: Session = Depends(get_db)):
