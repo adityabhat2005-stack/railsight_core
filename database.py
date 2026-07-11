@@ -2,16 +2,20 @@ import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 
-# Uses env var with a hardcoded fallback to ensure connection
-env_url = os.getenv("DATABASE_URL")
-# Use valid Neon database connection string here
-DATABASE_URL = env_url if env_url else "your_safe_fallback_url"
+# 1. Fetch raw environment string securely
+raw_url = os.getenv("DATABASE_URL", "")
 
-# Configures engine with safety parameters
+# 2. Automate driver formatting injection to prevent authentication drops
+if raw_url.startswith("postgresql://"):
+    DATABASE_URL = raw_url.replace("postgresql://", "postgresql+psycopg2://", 1)
+else:
+    DATABASE_URL = raw_url
+
+# 3. Initialize engine with strict connection tracking parameters
 engine = create_engine(
     DATABASE_URL,
-    pool_pre_ping=True,
-    pool_recycle=3600
+    pool_pre_ping=True,      # Automatically re-verify broken pooler connections
+    pool_recycle=1800        # Reset connection sockets every 30 minutes
 )
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
