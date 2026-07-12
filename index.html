@@ -8,8 +8,16 @@
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f4f6f9; color: #333; margin: 0; padding: 20px; }
         .container { max-width: 900px; margin: 0 auto; }
         h1 { color: #1e293b; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-bottom: 20px; font-size: 24px; }
-        .btn-refresh { background-color: #2563eb; color: white; border: none; padding: 10px 20px; font-size: 14px; font-weight: bold; border-radius: 6px; cursor: pointer; margin-bottom: 20px; }
+        
+        /* Interactive Panel Styles */
+        .control-panel { display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
+        .btn-refresh { background-color: #2563eb; color: white; border: none; padding: 12px 20px; font-size: 14px; font-weight: bold; border-radius: 6px; cursor: pointer; }
         .btn-refresh:hover { background-color: #1d4ed8; }
+        
+        /* Modern Filter Search Input Box */
+        .search-input { flex: 1; min-width: 250px; padding: 11px 15px; font-size: 14px; border: 2px solid #cbd5e1; border-radius: 6px; outline: none; transition: border-color 0.2s; }
+        .search-input:focus { border-color: #2563eb; }
+        
         .matrix-grid { display: grid; gap: 15px; }
         .train-card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-left: 6px solid #cbd5e1; display: flex; flex-direction: column; justify-content: space-between; }
         .train-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
@@ -19,32 +27,35 @@
         .time-info strong { color: #0f172a; }
         .alert-box { padding: 12px; border-radius: 6px; font-size: 14px; font-weight: 500; line-height: 1.4; margin-bottom: 10px; }
         
-        /* New Tracking and Crowd Info Badges Layout */
         .live-status-bar { display: flex; gap: 10px; margin-bottom: 12px; align-items: center; }
         .live-loc { font-size: 13px; color: #2563eb; background: #eff6ff; border: 1px solid #bfdbfe; padding: 4px 10px; border-radius: 6px; font-weight: 500; }
         .crowd-badge { font-size: 12px; padding: 4px 10px; border-radius: 6px; font-weight: bold; text-transform: uppercase; border: 1px solid transparent; }
         
-        /* High-visibility protection alert classes */
         .card-GREEN { border-left-color: #22c55e; }
         .alert-GREEN { background-color: #dcfce7; color: #15803d; }
-        
         .card-YELLOW { border-left-color: #eab308; }
         .alert-YELLOW { background-color: #fef9c3; color: #a16207; }
-        
         .card-RED { border-left-color: #ef4444; }
         .alert-RED { background-color: #fee2e2; color: #b91c1c; }
 
-        /* Dynamic Crowd Color Badges */
         .crowd-GREEN { background-color: #dcfce7; color: #166534; border-color: #4ade80; }
         .crowd-YELLOW { background-color: #fef3c7; color: #92400e; border-color: #fbbf24; }
         .crowd-RED { background-color: #fee2e2; color: #991b1b; border-color: #f87171; }
+        
+        .refresh-status { font-size: 12px; color: #64748b; margin-left: auto; font-style: italic; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <h1>RailSight: Live 3-Hour Transit Intelligence Matrix</h1>
-    <button class="btn-refresh" onclick="loadTransitMatrix()">Refresh Live Data</button>
+    
+    <!-- CONTROL AND FILTER NAVIGATION OVERLAY -->
+    <div class="control-panel">
+        <button class="btn-refresh" onclick="loadTransitMatrix()">Refresh Live Data</button>
+        <input type="text" id="searchBar" class="search-input" placeholder="🔍 Search by Train No. or Name..." onkeyup="filterTrains()">
+        <span id="timestamp" class="refresh-status">Syncing streams...</span>
+    </div>
     
     <div id="matrix" class="matrix-grid">
         <p style="color: #64748b;">Loading live corridor data streams from Render API...</p>
@@ -52,55 +63,89 @@
 </div>
 
 <script>
-    // Point directly to your active live Render web service backend
     const API_URL = "https://railsight-backend.onrender.com/api/transit-matrix/";
+    let localTrainCache = []; // Stores dataset in memory for instantaneous local search
 
     async function loadTransitMatrix() {
         const matrixContainer = document.getElementById('matrix');
+        const timestampIndicator = document.getElementById('timestamp');
         try {
             const response = await fetch(API_URL);
             if (!response.ok) throw new Error('API server layout response check failed');
             const data = await response.json();
             
-            if (data.length === 0) {
-                matrixContainer.innerHTML = '<p style="color: #64748b;">No trains scheduled in the next 3 hours.</p>';
-                return;
-            }
-
-            matrixContainer.innerHTML = data.map(train => `
-                <div class="train-card card-${train.alert_color}">
-                    <div class="train-header">
-                        ${train.train_no} - ${train.train_name}</span>
-                        <span class="train-category">${train.category_name}</span>
-                    </div>
-                    
-                    <!-- LIVE STATUS INFRASTRUCTURE MODULE -->
-                    <div class="live-status-bar">
-                        <div class="live-loc">📍 Current Location: <strong>${train.current_location}</strong></div>
-                        <div class="crowd-badge crowd-${train.crowd_color}">👥 Forecast: ${train.predicted_crowd}</div>
-                    </div>
-
-                    <div class="time-info">
-                        <span>Scheduled: <strong>${train.scheduled_departure}</strong></span>
-                        <span>Status: <strong style="color: ${train.delay_minutes > 0 ? '#ef4444' : '#22c55e'}">${train.actual_departure}</strong></span>
-                    </div>
-                    
-                    <div class="alert-box alert-${train.alert_color}">
-                        ${train.advisory_alert}
-                    </div>
-                </div>
-            `).join('');
+            localTrainCache = data; // Save incoming streaming array to search memory
+            
+            // Run rendering routine
+            displayTrains(localTrainCache);
+            
+            // Update last-sync visual timestamp marker
+            const now = new Date();
+            timestampIndicator.innerText = `Last cloud sync: ${now.toLocaleTimeString()}`;
 
         } catch (error) {
             matrixContainer.innerHTML = `
-                <div class="alert-box alert-RED" style="background-color: #fee2e2; color: #b91c1c;">
+                <div class="alert-box alert-RED">
                     <strong>Connection Error:</strong> Could not pull down active dashboard streams from your Render server. Check your backend status panel logs.
                 </div>
             `;
         }
     }
 
-    // Auto boot on page load execution
+    function displayTrains(trainList) {
+        const matrixContainer = document.getElementById('matrix');
+        if (trainList.length === 0) {
+            matrixContainer.innerHTML = '<p style="color: #64748b; text-align: center; padding: 20px;">No matching schedules discovered inside the corridor matrix.</p>';
+            return;
+        }
+
+        matrixContainer.innerHTML = trainList.map(train => `
+            <div class="train-card card-${train.alert_color}">
+                <div class="train-header">
+                    ${train.train_no} - ${train.train_name}</span>
+                    <span class="train-category">${train.category_name}</span>
+                </div>
+                
+                <div class="live-status-bar">
+                    <div class="live-loc">📍 Current Location: <strong>${train.current_location}</strong></div>
+                    <div class="crowd-badge crowd-${train.crowd_color}">👥 Forecast: ${train.predicted_crowd}</div>
+                </div>
+
+                <div class="time-info">
+                    <span>Scheduled: <strong>${train.scheduled_departure}</strong></span>
+                    <span>Status: <strong style="color: ${train.delay_minutes > 0 ? '#ef4444' : '#22c55e'}">${train.actual_departure}</strong></span>
+                </div>
+                
+                <div class="alert-box alert-${train.alert_color}">
+                    ${train.advisory_alert}
+                </div>
+            </div>
+        `).join('');
+    }
+
+    // INTERACTIVE SEARCH BAR FILTER RUNTIME
+    function filterTrains() {
+        const searchQuery = document.getElementById('searchBar').value.toLowerCase().trim();
+        
+        // Filter down our saved cache array instantly
+        const filteredList = localTrainCache.filter(train => 
+            train.train_no.toLowerCase().includes(searchQuery) || 
+            train.train_name.toLowerCase().includes(searchQuery)
+        );
+        
+        displayTrains(filteredList);
+    }
+
+    // BACKGROUND AUTOMATION ENGINE: Fetch fresh live telemetry every 30 seconds
+    setInterval(() => {
+        // Only auto-refresh if the user isn't actively trying to type a search query
+        const searchInput = document.getElementById('searchBar').value;
+        if (!searchInput) {
+            loadTransitMatrix();
+        }
+    }, 30000); 
+
+    // Initial project setup trigger on boot
     loadTransitMatrix();
 </script>
 
