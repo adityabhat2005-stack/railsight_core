@@ -10,6 +10,10 @@ class CommuterTransitWindow(BaseModel):
     actual_departure: str
     advisory_alert: str
     alert_color: str
+    # --- NEW FIELDS FOR LIVE TRACKING & CROWD PREDICTION ---
+    current_location: str
+    predicted_crowd: str
+    crowd_color: str
 
     class Config:
         from_attributes = True
