@@ -15,11 +15,16 @@
         .train-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .train-identity { font-size: 18px; font-weight: bold; color: #0f172a; }
         .train-category { font-size: 12px; background: #e2e8f0; padding: 3px 8px; border-radius: 12px; font-weight: bold; color: #475569; }
-        .time-info { font-size: 14px; margin-bottom: 12px; color: #64748b; }
+        .time-info { font-size: 14px; margin-bottom: 12px; color: #64748b; display: flex; gap: 15px; flex-wrap: wrap; }
         .time-info strong { color: #0f172a; }
-        .alert-box { padding: 12px; border-radius: 6px; font-size: 14px; font-weight: 500; line-height: 1.4; }
+        .alert-box { padding: 12px; border-radius: 6px; font-size: 14px; font-weight: 500; line-height: 1.4; margin-bottom: 10px; }
         
-        /* High-visibility fine protection alert classes */
+        /* New Tracking and Crowd Info Badges Layout */
+        .live-status-bar { display: flex; gap: 10px; margin-bottom: 12px; align-items: center; }
+        .live-loc { font-size: 13px; color: #2563eb; background: #eff6ff; border: 1px solid #bfdbfe; padding: 4px 10px; border-radius: 6px; font-weight: 500; }
+        .crowd-badge { font-size: 12px; padding: 4px 10px; border-radius: 6px; font-weight: bold; text-transform: uppercase; border: 1px solid transparent; }
+        
+        /* High-visibility protection alert classes */
         .card-GREEN { border-left-color: #22c55e; }
         .alert-GREEN { background-color: #dcfce7; color: #15803d; }
         
@@ -28,12 +33,17 @@
         
         .card-RED { border-left-color: #ef4444; }
         .alert-RED { background-color: #fee2e2; color: #b91c1c; }
+
+        /* Dynamic Crowd Color Badges */
+        .crowd-GREEN { background-color: #dcfce7; color: #166534; border-color: #4ade80; }
+        .crowd-YELLOW { background-color: #fef3c7; color: #92400e; border-color: #fbbf24; }
+        .crowd-RED { background-color: #fee2e2; color: #991b1b; border-color: #f87171; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>RailSight: 3-Hour Transit Matrix (MJS to MAQ)</h1>
+    <h1>RailSight: Live 3-Hour Transit Intelligence Matrix</h1>
     <button class="btn-refresh" onclick="loadTransitMatrix()">Refresh Live Data</button>
     
     <div id="matrix" class="matrix-grid">
@@ -42,7 +52,7 @@
 </div>
 
 <script>
-    // IMPORTANT: Swap out this link with your actual public Render URL link
+    // Point directly to your active live Render web service backend
     const API_URL = "https://onrender.com";
 
     async function loadTransitMatrix() {
@@ -63,9 +73,18 @@
                         ${train.train_no} - ${train.train_name}</span>
                         <span class="train-category">${train.category_name}</span>
                     </div>
-                    <div class="time-info">
-                        Scheduled: <strong>${train.scheduled_departure}</strong> | Status: <strong>${train.actual_departure}</strong>
+                    
+                    <!-- LIVE STATUS INFRASTRUCTURE MODULE -->
+                    <div class="live-status-bar">
+                        <div class="live-loc">📍 Current Location: <strong>${train.current_location}</strong></div>
+                        <div class="crowd-badge crowd-${train.crowd_color}">👥 Forecast: ${train.predicted_crowd}</div>
                     </div>
+
+                    <div class="time-info">
+                        <span>Scheduled: <strong>${train.scheduled_departure}</strong></span>
+                        <span>Status: <strong style="color: ${train.delay_minutes > 0 ? '#ef4444' : '#22c55e'}">${train.actual_departure}</strong></span>
+                    </div>
+                    
                     <div class="alert-box alert-${train.alert_color}">
                         ${train.advisory_alert}
                     </div>
@@ -75,13 +94,13 @@
         } catch (error) {
             matrixContainer.innerHTML = `
                 <div class="alert-box alert-RED" style="background-color: #fee2e2; color: #b91c1c;">
-                    <strong>Connection Error:</strong> Could not connect to the Render API. Ensure your Render backend is finished deploying and update the API_URL string inside your index.html file.
+                    <strong>Connection Error:</strong> Could not pull down active dashboard streams from your Render server. Check your backend status panel logs.
                 </div>
             `;
         }
     }
 
-    // Run automatically when the webpage opens in your browser
+    // Auto boot on page load execution
     loadTransitMatrix();
 </script>
 
