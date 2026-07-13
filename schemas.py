@@ -1,19 +1,26 @@
+# schemas.py
 from pydantic import BaseModel
-from datetime import time
+from typing import List, Optional
 
-class CommuterTransitWindow(BaseModel):
-    train_no: str
-    train_name: str
-    category_name: str
-    scheduled_departure: time
-    delay_minutes: int
-    actual_departure: str
-    advisory_alert: str
-    alert_color: str
-    # --- NEW FIELDS FOR LIVE TRACKING & CROWD PREDICTION ---
-    current_location: str
-    predicted_crowd: str
-    crowd_color: str
+class TrainQueryRequest(BaseModel):
+    from_station: str
+    to_station: str
+    tier_filter: Optional[str] = "ALL"
 
-    class Config:
-        from_attributes = True
+class TrainResponseModel(BaseModel):
+    trainNumber: str
+    name: str
+    departure: str
+    arrival: str
+    duration: str
+    tier: str
+    baseFare: int
+    liveDensity: str
+    densityColor: str
+    justificationText: str
+
+class CorridorSearchResponse(BaseModel):
+    status: str
+    source: str
+    destination: str
+    results: List[TrainResponseModel]
