@@ -1,153 +1,128 @@
+<!-- index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RailSight Operational Intelligence</title>
-    <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f4f6f9; color: #333; margin: 0; padding: 20px; }
-        .container { max-width: 900px; margin: 0 auto; }
-        h1 { color: #1e293b; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-bottom: 20px; font-size: 24px; }
-        
-        /* Interactive Panel Styles */
-        .control-panel { display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
-        .btn-refresh { background-color: #2563eb; color: white; border: none; padding: 12px 20px; font-size: 14px; font-weight: bold; border-radius: 6px; cursor: pointer; }
-        .btn-refresh:hover { background-color: #1d4ed8; }
-        
-        /* Modern Filter Search Input Box */
-        .search-input { flex: 1; min-width: 250px; padding: 11px 15px; font-size: 14px; border: 2px solid #cbd5e1; border-radius: 6px; outline: none; transition: border-color 0.2s; }
-        .search-input:focus { border-color: #2563eb; }
-        
-        .matrix-grid { display: grid; gap: 15px; }
-        .train-card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-left: 6px solid #cbd5e1; display: flex; flex-direction: column; justify-content: space-between; }
-        .train-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .train-identity { font-size: 18px; font-weight: bold; color: #0f172a; }
-        .train-category { font-size: 12px; background: #e2e8f0; padding: 3px 8px; border-radius: 12px; font-weight: bold; color: #475569; }
-        .time-info { font-size: 14px; margin-bottom: 12px; color: #64748b; display: flex; gap: 15px; flex-wrap: wrap; }
-        .time-info strong { color: #0f172a; }
-        .alert-box { padding: 12px; border-radius: 6px; font-size: 14px; font-weight: 500; line-height: 1.4; margin-bottom: 10px; }
-        
-        .live-status-bar { display: flex; gap: 10px; margin-bottom: 12px; align-items: center; }
-        .live-loc { font-size: 13px; color: #2563eb; background: #eff6ff; border: 1px solid #bfdbfe; padding: 4px 10px; border-radius: 6px; font-weight: 500; }
-        .crowd-badge { font-size: 12px; padding: 4px 10px; border-radius: 6px; font-weight: bold; text-transform: uppercase; border: 1px solid transparent; }
-        
-        .card-GREEN { border-left-color: #22c55e; }
-        .alert-GREEN { background-color: #dcfce7; color: #15803d; }
-        .card-YELLOW { border-left-color: #eab308; }
-        .alert-YELLOW { background-color: #fef9c3; color: #a16207; }
-        .card-RED { border-left-color: #ef4444; }
-        .alert-RED { background-color: #fee2e2; color: #b91c1c; }
-
-        .crowd-GREEN { background-color: #dcfce7; color: #166534; border-color: #4ade80; }
-        .crowd-YELLOW { background-color: #fef3c7; color: #92400e; border-color: #fbbf24; }
-        .crowd-RED { background-color: #fee2e2; color: #991b1b; border-color: #f87171; }
-        
-        .refresh-status { font-size: 12px; color: #64748b; margin-left: auto; font-style: italic; }
-    </style>
+    <title>Unreserved Commuter Telemetry Console</title>
+    <script src="https://tailwindcss.com"></script>
+    <script>
+        tailwind.config = { theme: { extend: { colors: { railBlue: '#0F2942', railOrange: '#FB8C00' } } } }
+    </script>
 </head>
-<body>
+<body class="bg-gray-100 min-h-screen">
 
-<div class="container">
-    <h1>RailSight: Live 3-Hour Transit Intelligence Matrix</h1>
-    
-    <!-- CONTROL AND FILTER NAVIGATION OVERLAY -->
-    <div class="control-panel">
-        <button class="btn-refresh" onclick="loadTransitMatrix()">Refresh Live Data</button>
-        <input type="text" id="searchBar" class="search-input" placeholder="🔍 Search by Train No. or Name..." onkeyup="filterTrains()">
-        <span id="timestamp" class="refresh-status">Syncing streams...</span>
-    </div>
-    
-    <div id="matrix" class="matrix-grid">
-        <p style="color: #64748b;">Loading live corridor data streams from Render API...</p>
-    </div>
-</div>
-
-<script>
-    const API_URL = "https://railsight-backend.onrender.com/api/transit-matrix/";
-    let localTrainCache = []; // Stores dataset in memory for instantaneous local search
-
-    async function loadTransitMatrix() {
-        const matrixContainer = document.getElementById('matrix');
-        const timestampIndicator = document.getElementById('timestamp');
-        try {
-            const response = await fetch(API_URL);
-            if (!response.ok) throw new Error('API server layout response check failed');
-            const data = await response.json();
-            
-            localTrainCache = data; // Save incoming streaming array to search memory
-            
-            // Run rendering routine
-            displayTrains(localTrainCache);
-            
-            // Update last-sync visual timestamp marker
-            const now = new Date();
-            timestampIndicator.innerText = `Last cloud sync: ${now.toLocaleTimeString()}`;
-
-        } catch (error) {
-            matrixContainer.innerHTML = `
-                <div class="alert-box alert-RED">
-                    <strong>Connection Error:</strong> Could not pull down active dashboard streams from your Render server. Check your backend status panel logs.
-                </div>
-            `;
-        }
-    }
-
-    function displayTrains(trainList) {
-        const matrixContainer = document.getElementById('matrix');
-        if (trainList.length === 0) {
-            matrixContainer.innerHTML = '<p style="color: #64748b; text-align: center; padding: 20px;">No matching schedules discovered inside the corridor matrix.</p>';
-            return;
-        }
-
-        matrixContainer.innerHTML = trainList.map(train => `
-            <div class="train-card card-${train.alert_color}">
-                <div class="train-header">
-                    ${train.train_no} - ${train.train_name}</span>
-                    <span class="train-category">${train.category_name}</span>
-                </div>
-                
-                <div class="live-status-bar">
-                    <div class="live-loc">📍 Current Location: <strong>${train.current_location}</strong></div>
-                    <div class="crowd-badge crowd-${train.crowd_color}">👥 Forecast: ${train.predicted_crowd}</div>
-                </div>
-
-                <div class="time-info">
-                    <span>Scheduled: <strong>${train.scheduled_departure}</strong></span>
-                    <span>Status: <strong style="color: ${train.delay_minutes > 0 ? '#ef4444' : '#22c55e'}">${train.actual_departure}</strong></span>
-                </div>
-                
-                <div class="alert-box alert-${train.alert_color}">
-                    ${train.advisory_alert}
-                </div>
+    <header class="bg-railBlue text-white shadow-md">
+        <div class="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
+            <div>
+                <h1 class="text-lg font-bold">Unreserved Commuter Hub</h1>
+                <p class="text-xs text-gray-300">Academic Evaluation Build • Malabar Sector Engine</p>
             </div>
-        `).join('');
-    }
+            <span class="text-xs bg-black/30 px-3 py-1.5 rounded text-green-400 font-mono font-bold">● System Core Connected</span>
+        </div>
+    </header>
 
-    // INTERACTIVE SEARCH BAR FILTER RUNTIME
-    function filterTrains() {
-        const searchQuery = document.getElementById('searchBar').value.toLowerCase().trim();
-        
-        // Filter down our saved cache array instantly
-        const filteredList = localTrainCache.filter(train => 
-            train.train_no.toLowerCase().includes(searchQuery) || 
-            train.train_name.toLowerCase().includes(searchQuery)
-        );
-        
-        displayTrains(filteredList);
-    }
+    <main class="max-w-6xl mx-auto px-4 py-6 space-y-6">
+        <!-- SCOPE ALERT -->
+        <div class="bg-amber-50 border-l-4 border-railOrange p-4 rounded shadow-sm">
+            <p class="text-xs text-amber-700"><strong>Academic Notice:</strong> Station routing is structurally locked to <strong>MAJN ➔ CLT</strong> to showcase specialized unreserved fleets absent on IRCTC engines.</p>
+        </div>
 
-    // BACKGROUND AUTOMATION ENGINE: Fetch fresh live telemetry every 30 seconds
-    setInterval(() => {
-        // Only auto-refresh if the user isn't actively trying to type a search query
-        const searchInput = document.getElementById('searchBar').value;
-        if (!searchInput) {
-            loadTransitMatrix();
+        <!-- CONSOLE ROUTER ENGINE -->
+        <section class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+            <form id="searchForm" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">From Station</label>
+                    <input type="text" id="fromStation" value="MAJN" class="w-full bg-gray-50 border border-gray-300 rounded-lg px-3 py-2 text-sm font-semibold uppercase">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">To Station</label>
+                    <input type="text" id="toStation" value="CLT" class="w-full bg-gray-50 border border-gray-300 rounded-lg px-3 py-2 text-sm font-semibold uppercase">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Ticket Category Filter</label>
+                    <select id="tierFilter" class="w-full bg-gray-50 border border-gray-300 rounded-lg px-3 py-2 text-sm font-medium">
+                        <option value="ALL">Show All Unreserved Rakes</option>
+                        <option value="AMRIT BHARAT (GS)">AMRIT BHARAT (GS)</option>
+                        <option value="ANTYODAYA EXPRESS">ANTYODAYA EXPRESS</option>
+                        <option value="DE-RESERVED SLEEPER">DE-RESERVED SLEEPER</option>
+                        <option value="EXPRESS TIER">EXPRESS TIER</option>
+                    </select>
+                </div>
+                <div class="flex items-end">
+                    <button type="submit" class="w-full bg-railBlue hover:bg-slate-800 text-white font-semibold rounded-lg py-2 text-sm transition shadow-md">Fetch Live Rakes</button>
+                </div>
+            </form>
+        </section>
+
+        <!-- TRACKER TARGET BOARD -->
+        <section class="space-y-4">
+            <div class="flex justify-between items-center px-1">
+                <h3 class="text-md font-bold text-gray-800" id="resultHeading">Available Unreserved Services</h3>
+                <span class="text-xs bg-gray-200 text-gray-700 px-2 py-1 rounded-full font-mono" id="trainCount">0 Trains</span>
+            </div>
+            <div id="errorZone" class="hidden bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl text-xs"></div>
+            <div id="trainListingZone" class="space-y-4"></div>
+        </section>
+    </main>
+
+    <script>
+        const searchForm = document.getElementById('searchForm');
+        
+        async function runTelemetryQuery() {
+            const errorZone = document.getElementById('errorZone');
+            const targetZone = document.getElementById('trainListingZone');
+            errorZone.classList.add('hidden');
+            targetZone.innerHTML = '';
+
+            const payload = {
+                from_station: document.getElementById('fromStation').value,
+                to_station: document.getElementById('toStation').value,
+                tier_filter: document.getElementById('tierFilter').value
+            };
+
+            try {
+                // Endpoint target tracking backend service layer
+                const response = await fetch('http://127.0.0', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    errorZone.innerHTML = `<strong>Backend Rejection:</strong> ${data.detail || 'Data validation failure.'}`;
+                    errorZone.classList.remove('hidden');
+                    return;
+                }
+
+                document.getElementById('trainCount').textContent = `${data.results.length} Train(s) Found`;
+                
+                data.results.forEach(train => {
+                    targetZone.innerHTML += `
+                        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                            <div class="bg-slate-50 px-4 py-2.5 border-b flex justify-between items-center">
+                                <span class="text-sm font-bold text-slate-800">${train.trainNumber} — ${train.name}</span>
+                                <span class="text-xs font-bold px-2 py-0.5 rounded bg-railBlue text-white">${train.tier}</span>
+                            </div>
+                            <div class="p-4 grid grid-cols-1 md:grid-cols-3 items-center gap-4">
+                                <div class="text-sm font-medium text-gray-700">🕒 ${train.departure} ➔ ${train.arrival} (${train.duration})</div>
+                                <div><span class="text-xs px-2 py-1 rounded-full border ${train.densityColor}">● ${train.liveDensity}</span></div>
+                                <div class="md:text-right text-lg font-black text-gray-900">₹${train.baseFare}</div>
+                            </div>
+                            <div class="bg-blue-50 px-4 py-2 text-xs text-blue-900 font-medium">🎓 Panel Note: ${train.justificationText}</div>
+                        </div>
+                    `;
+                });
+            } catch (err) {
+                errorZone.innerHTML = `<strong>Network Exception:</strong> Failed to fetch live stream. Verify your FastAPI local runtime is listening on port 8000.`;
+                errorZone.classList.remove('hidden');
+            }
         }
-    }, 30000); 
 
-    // Initial project setup trigger on boot
-    loadTransitMatrix();
-</script>
-
+        searchForm.addEventListener('submit', (e) => { e.preventDefault(); runTelemetryQuery(); });
+        window.addEventListener('DOMContentLoaded', runTelemetryQuery);
+    </script>
 </body>
 </html>
