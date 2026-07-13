@@ -4,19 +4,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Railsight Core — Unreserved Telemetry System</title>
-    <script src="https://tailwindcss.com"></script>
+    <title>Railsight Core — Real-Time Train Tracking</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .railBlue { background-color: #0A2540; }
+        .railOrange { background-color: #FF6B00; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+    </style>
     <script>
         tailwind.config = {
             theme: {
                 extend: {
-                    colors: { railBlue: '#0A2540', railOrange: '#FF6B00' }
+                    colors: { 
+                        railBlue: '#0A2540', 
+                        railOrange: '#FF6B00' 
+                    }
                 }
             }
         }
     </script>
 </head>
-<body class="bg-slate-50 min-h-screen text-slate-800 antialiased font-sans">
+<body class="bg-slate-50 min-h-screen text-slate-800"
 
     <!-- Global App Header -->
     <header class="bg-gradient-to-r from-railBlue to-blue-900 text-white shadow-xl border-b-4 border-railOrange">
@@ -366,6 +374,57 @@
         }
 
         searchForm.addEventListener('submit', (e) => { e.preventDefault(); triggerRakePipeline(); });
+        
+        // Demo data for testing UI (loads if API fails)
+        const DEMO_TRAINS = [
+            {
+                trainNumber: '12621',
+                name: 'Mangaluru Express',
+                departure: '08:00',
+                arrival: '17:30',
+                duration: '9h 30m',
+                tier: 'AMRIT BHARAT (GS)',
+                baseFare: 450,
+                liveDensity: 'HIGH',
+                densityColor: 'bg-red-100 border-red-300 text-red-700',
+                justificationText: 'High volume unreserved availability'
+            },
+            {
+                trainNumber: '16590',
+                name: 'Antyodaya Coastal',
+                departure: '10:30',
+                arrival: '19:45',
+                duration: '9h 15m',
+                tier: 'ANTYODAYA EXPRESS',
+                baseFare: 380,
+                liveDensity: 'MEDIUM',
+                densityColor: 'bg-yellow-100 border-yellow-300 text-yellow-700',
+                justificationText: 'Social welfare unreserved service'
+            },
+            {
+                trainNumber: '18633',
+                name: 'KK Express',
+                departure: '16:45',
+                arrival: '02:15',
+                duration: '9h 30m',
+                tier: 'DE-RESERVED SLEEPER',
+                baseFare: 520,
+                liveDensity: 'LOW',
+                densityColor: 'bg-green-100 border-green-300 text-green-700',
+                justificationText: 'De-reserved sleeper availability'
+            }
+        ];
+
+        // Show demo data after 3 seconds if API fails
+        setTimeout(() => {
+            if(document.getElementById('trainCount').textContent === '0 Trains') {
+                console.log("📊 Loading demo data (API timeout)");
+                buildRakeInterface(DEMO_TRAINS);
+                badge.innerHTML = "⚠️ Demo Data (API Slow)";
+                badge.className = "text-xs font-mono font-bold bg-amber-500/20 border border-amber-400/50 text-amber-300 px-4 py-2 rounded-lg";
+            }
+        }, 4000);
+
         window.addEventListener('DOMContentLoaded', triggerRakePipeline);
 
         // ===== TRAIN TRACKING FUNCTIONALITY =====
