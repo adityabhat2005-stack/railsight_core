@@ -86,7 +86,33 @@ INSERT INTO train_tracking (train_no, current_station, current_latitude, current
 ('12589', 'Kannur', 12.0079, 75.3704, 365.00, 15.00, 72.0, 12, NOW() - INTERVAL '45 minutes', 'RUNNING'),
 ('12589', 'Kozhikode Main', 11.2588, 75.6355, 378.00, 2.00, 65.0, 12, NOW(), 'RUNNING');
 
+-- 5. CREATE UNRESERVED_TRAINS TABLE (Backend expects this)
+CREATE TABLE IF NOT EXISTS unreserved_trains (
+    train_number VARCHAR(20) PRIMARY KEY,
+    name VARCHAR(100),
+    departure VARCHAR(10),
+    arrival VARCHAR(10),
+    duration VARCHAR(10),
+    tier VARCHAR(50),
+    base_fare INTEGER,
+    live_density VARCHAR(20),
+    density_color VARCHAR(100),
+    justification_text TEXT
+);
+
+-- 6. POPULATE UNRESERVED_TRAINS from train_master
+DELETE FROM unreserved_trains;
+
+INSERT INTO unreserved_trains (train_number, name, departure, arrival, duration, tier, base_fare, live_density, density_color, justification_text) VALUES
+('12621', 'Mangaluru Express', '08:00', '17:30', '9h 30m', 'AMRIT BHARAT (GS)', 450, 'HIGH', 'bg-red-100 border-red-300 text-red-700', 'High volume unreserved availability'),
+('16590', 'Antyodaya Coastal', '10:30', '19:45', '9h 15m', 'ANTYODAYA EXPRESS', 380, 'MEDIUM', 'bg-yellow-100 border-yellow-300 text-yellow-700', 'Social welfare unreserved service'),
+('17339', 'Coastal Suryanagari', '14:15', '23:30', '9h 15m', 'AMRIT BHARAT (GS)', 425, 'HIGH', 'bg-red-100 border-red-300 text-red-700', 'Regional unreserved express'),
+('18633', 'KK Express', '16:45', '02:15+1', '9h 30m', 'DE-RESERVED SLEEPER', 520, 'LOW', 'bg-green-100 border-green-300 text-green-700', 'De-reserved sleeper availability'),
+('11040', 'Amrit Bharat Fast', '06:00', '15:30', '9h 30m', 'AMRIT BHARAT (GS)', 435, 'MEDIUM', 'bg-yellow-100 border-yellow-300 text-yellow-700', 'Fast unreserved service'),
+('12589', 'Express Rajya', '20:30', '06:00+1', '9h 30m', 'EXPRESS TIER', 400, 'HIGH', 'bg-red-100 border-red-300 text-red-700', 'Evening unreserved express');
+
 -- VERIFY DATA WAS INSERTED
 SELECT COUNT(*) as total_tracking_records FROM train_tracking;
-SELECT * FROM train_master;
-SELECT * FROM train_tracking ORDER BY train_no, timestamp DESC LIMIT 10;
+SELECT COUNT(*) as total_unreserved_trains FROM unreserved_trains;
+SELECT * FROM unreserved_trains;
+SELECT * FROM train_tracking ORDER BY train_no, timestamp DESC LIMIT 3;
