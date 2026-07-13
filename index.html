@@ -619,6 +619,133 @@
 
         searchForm.addEventListener('submit', (e) => { e.preventDefault(); triggerRakePipeline(); });
 
+        // ===== TRAIN TRACKING FUNCTIONALITY =====
+        const trackForm = document.getElementById('trackForm');
+        const toggleLiveBtn = document.getElementById('toggleLiveBtn');
+        const trackingResultsSection = document.getElementById('trackingResultsSection');
+        const trackingErrorZone = document.getElementById('trackingErrorZone');
+        let liveUpdateInterval = null;
+
+        function formatTimestamp(timestamp) {
+            const date = new Date(timestamp);
+            return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        async function fetchTrainStatus(trainNo) {
+            const response = await fetch(`${BACKEND_URL}/api/v1/trains/${trainNo.trim().toUpperCase()}/status`);
+            if(response.ok) {
+                return await response.json();
+            } else {
+                throw new Error('Train not found');
+            }
+        }
+
+        async function fetchTrainHistory(trainNo, hours = 3) {
+            const response = await fetch(`${BACKEND_URL}/api/v1/trains/${trainNo.trim().toUpperCase()}/history?hours=${hours}`);
+            if(response.ok) {
+                return await response.json();
+            } else {
+                throw new Error('History not found');
+            }
+        }
+
+        function displayTrackingStatus(data) {
+            const liveStatusCard = document.getElementById('liveStatusCard');
+            liveStatusCard.classList.remove('hidden');
+            
+            document.getElementById('trackTrainName').textContent = data.train_name;
+            document.getElementById('trackTrainNumber').textContent = `Train #${data.train_no}`;
+            document.getElementById('trackCurrentStation').textContent = data.current_station;
+            document.getElementById('trackSpeed').textContent = data.current_speed_kmph + ' km/h';
+            document.getElementById('trackStatus').textContent = data.status;
+            document.getElementById('progressBar').style.width = data.percent_progress + '%';
+            document.getElementById('progressText').textContent = data.percent_progress.toFixed(1) + '%';
+            document.getElementById('trackDistanceCovered').textContent = data.distance_covered_km;
+            document.getElementById('trackDistanceRemaining').textContent = data.distance_remaining_km;
+            document.getElementById('trackDelay').textContent = data.delay_minutes + ' min';
+        }
+
+        function displayTrackingHistory(historyData) {
+            const historyCard = document.getElementById('historyCard');
+            const timeline = document.getElementById('historyTimeline');
+            historyCard.classList.remove('hidden');
+            timeline.innerHTML = '';
+
+            if(!historyData.three_hour_history || historyData.three_hour_history.length === 0) {
+                timeline.innerHTML = '<p style="text-align: center; padding: 20px; color: #94a3b8;">📭 No history available</p>';
+                return;
+            }
+
+            historyData.three_hour_history.forEach((entry, idx) => {
+                const timeStr = formatTimestamp(entry.timestamp);
+                const isLast = idx === historyData.three_hour_history.length - 1;
+                const item = document.createElement('div');
+                item.className = 'timeline-item';
+                item.innerHTML = `
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-content">
+                        <div class="timeline-station">${entry.current_station}</div>
+                        <div class="timeline-details">
+                            ${timeStr} • ${entry.current_speed_kmph} km/h • ${entry.percent_progress.toFixed(1)}% progress
+                        </div>
+                    </div>
+                `;
+                timeline.appendChild(item);
+            });
+        }
+
+        async function trackTrain(trainNo) {
+            trackingErrorZone.classList.add('hidden');
+            trackingResultsSection.classList.remove('hidden');
+            
+            try {
+                const statusData = await fetchTrainStatus(trainNo);
+                displayTrackingStatus(statusData);
+                
+                try {
+                    const historyData = await fetchTrainHistory(trainNo);
+                    displayTrackingHistory(historyData);
+                } catch(err) {
+                    console.log('History not available yet');
+                }
+            } catch(err) {
+                trackingErrorZone.innerHTML = `⚠️ Train not found: ${trainNo}`;
+                trackingErrorZone.classList.remove('hidden');
+                document.getElementById('liveStatusCard').classList.add('hidden');
+                document.getElementById('historyCard').classList.add('hidden');
+            }
+        }
+
+        let isLiveActive = false;
+        toggleLiveBtn.addEventListener('click', () => {
+            const trainNo = document.getElementById('trainNumberInput').value.trim();
+            if(!trainNo) return;
+
+            isLiveActive = !isLiveActive;
+            toggleLiveBtn.textContent = isLiveActive ? '⏸ Stop Live Updates' : '▶ Live Updates';
+            toggleLiveBtn.style.background = isLiveActive ? 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)' : 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)';
+
+            if(isLiveActive) {
+                if(liveUpdateInterval) clearInterval(liveUpdateInterval);
+                liveUpdateInterval = setInterval(() => { trackTrain(trainNo); }, 10000);
+            } else {
+                if(liveUpdateInterval) clearInterval(liveUpdateInterval);
+                liveUpdateInterval = null;
+            }
+        });
+
+        trackForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const trainNo = document.getElementById('trainNumberInput').value.trim();
+            if(trainNo) {
+                trackTrain(trainNo);
+                if(isLiveActive && liveUpdateInterval) clearInterval(liveUpdateInterval);
+                isLiveActive = false;
+                toggleLiveBtn.textContent = '▶ Live Updates';
+                toggleLiveBtn.style.background = 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)';
+            }
+        });
+
         // Load data on page load
         setTimeout(() => {
             triggerRakePipeline();
