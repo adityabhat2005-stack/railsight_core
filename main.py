@@ -117,8 +117,8 @@ def get_live_train_status(train_no: str):
         if not record:
             raise HTTPException(status_code=404, detail=f"Train {train_no} tracking data not found")
         
-        total_km = float(record[6]) + float(record[7])
-        percent_progress = (float(record[6]) / total_km * 100) if total_km > 0 else 0
+        total_km = float(record[5]) + float(record[6])
+        percent_progress = (float(record[5]) / total_km * 100) if total_km > 0 else 0
         
         return {
             "train_no": record[0],
@@ -126,12 +126,12 @@ def get_live_train_status(train_no: str):
             "current_station": record[2],
             "current_latitude": record[3],
             "current_longitude": record[4],
-            "distance_covered_km": float(record[6]),
-            "distance_remaining_km": float(record[7]),
-            "current_speed_kmph": float(record[8]),
-            "delay_minutes": record[9],
-            "status": record[10],
-            "timestamp": record[11].isoformat(),
+            "distance_covered_km": float(record[5]),
+            "distance_remaining_km": float(record[6]),
+            "current_speed_kmph": float(record[7]),
+            "delay_minutes": record[8],
+            "status": record[9],
+            "timestamp": record[10].isoformat(),
             "percent_progress": round(percent_progress, 2)
         }
     except Exception as e:
@@ -177,8 +177,8 @@ def get_train_tracking_history(train_no: str, hours: int = 3):
         
         history = []
         for r in records:
-            total_km = float(r[6]) + float(r[7])
-            percent_progress = (float(r[6]) / total_km * 100) if total_km > 0 else 0
+            total_km = float(r[5]) + float(r[6])
+            percent_progress = (float(r[5]) / total_km * 100) if total_km > 0 else 0
             
             history.append({
                 "train_no": r[0],
@@ -186,12 +186,12 @@ def get_train_tracking_history(train_no: str, hours: int = 3):
                 "current_station": r[2],
                 "current_latitude": r[3],
                 "current_longitude": r[4],
-                "distance_covered_km": float(r[6]),
-                "distance_remaining_km": float(r[7]),
-                "current_speed_kmph": float(r[8]),
-                "delay_minutes": r[9],
-                "status": r[10],
-                "timestamp": r[11].isoformat(),
+                "distance_covered_km": float(r[5]),
+                "distance_remaining_km": float(r[6]),
+                "current_speed_kmph": float(r[7]),
+                "delay_minutes": r[8],
+                "status": r[9],
+                "timestamp": r[10].isoformat(),
                 "percent_progress": round(percent_progress, 2)
             })
         
