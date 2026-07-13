@@ -1,6 +1,7 @@
 # schemas.py
 from pydantic import BaseModel
 from typing import List, Optional
+from datetime import datetime
 
 class TrainQueryRequest(BaseModel):
     from_station: str
@@ -24,3 +25,26 @@ class CorridorSearchResponse(BaseModel):
     source: str
     destination: str
     results: List[TrainResponseModel]
+
+class TrainTrackingRequest(BaseModel):
+    train_no: str
+
+class LiveTrainStatus(BaseModel):
+    train_no: str
+    train_name: str
+    current_station: str
+    current_latitude: float
+    current_longitude: float
+    distance_covered_km: float
+    distance_remaining_km: float
+    current_speed_kmph: float
+    delay_minutes: int
+    status: str
+    timestamp: datetime
+    percent_progress: float
+
+class TrackingHistory(BaseModel):
+    train_no: str
+    train_name: str
+    current_status: LiveTrainStatus
+    three_hour_history: List[LiveTrainStatus]

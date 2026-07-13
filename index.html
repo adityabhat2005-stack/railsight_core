@@ -77,6 +77,29 @@
             </form>
         </section>
 
+        <!-- Track My Train Section -->
+        <section class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-6">
+            <h3 class="text-sm font-extrabold text-railBlue uppercase tracking-widest mb-4 flex items-center space-x-2">
+                <span>🚂 Live Train Tracking</span>
+            </h3>
+            <form id="trackForm" class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Enter Train Number</label>
+                    <input type="text" id="trainNumberInput" placeholder="e.g., 12345" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold uppercase">
+                </div>
+                <div class="flex items-end">
+                    <button type="submit" class="w-full bg-railOrange hover:bg-orange-700 text-white font-bold rounded-xl py-2.5 text-sm transition-all shadow-md">
+                        Track Now
+                    </button>
+                </div>
+                <div class="flex items-end">
+                    <button type="button" id="toggleLiveBtn" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl py-2.5 text-sm transition-all shadow-md">
+                        Enable Live Updates
+                    </button>
+                </div>
+            </form>
+        </section>
+
         <!-- Dynamic Output Stream Board -->
         <section class="space-y-4">
             <div class="flex justify-between items-center px-1">
@@ -85,6 +108,75 @@
             </div>
             <div id="errorZone" class="hidden rounded-xl border p-4 shadow-sm text-xs font-medium"></div>
             <div id="trainListingZone" class="grid grid-cols-1 gap-4"></div>
+        </section>
+
+        <!-- Live Train Tracking Display -->
+        <section id="trackingResultsSection" class="hidden space-y-4">
+            <div class="px-1 mb-4">
+                <h2 class="text-sm font-extrabold text-railOrange uppercase tracking-widest">Real-Time Train Tracking</h2>
+            </div>
+            <div id="trackingErrorZone" class="hidden rounded-xl border p-4 shadow-sm text-xs font-medium"></div>
+            
+            <!-- Live Status Card -->
+            <div id="liveStatusCard" class="hidden bg-gradient-to-r from-railBlue to-blue-900 text-white rounded-2xl shadow-lg p-6 border border-railOrange/50">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <h3 id="trackTrainName" class="text-lg font-extrabold">Train Name</h3>
+                        <p id="trackTrainNumber" class="text-sm text-blue-200 font-mono">Train #</p>
+                    </div>
+                    <div id="liveIndicator" class="text-xl animate-pulse">🟢 LIVE</div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <div class="bg-white/10 rounded-lg p-3">
+                        <p class="text-xs text-blue-200 mb-1">Current Station</p>
+                        <p id="trackCurrentStation" class="text-sm font-bold">Loading...</p>
+                    </div>
+                    <div class="bg-white/10 rounded-lg p-3">
+                        <p class="text-xs text-blue-200 mb-1">Speed</p>
+                        <p id="trackSpeed" class="text-sm font-bold">0 km/h</p>
+                    </div>
+                    <div class="bg-white/10 rounded-lg p-3">
+                        <p class="text-xs text-blue-200 mb-1">Status</p>
+                        <p id="trackStatus" class="text-sm font-bold">RUNNING</p>
+                    </div>
+                </div>
+
+                <div class="bg-white/10 rounded-lg p-3 mb-4">
+                    <p class="text-xs text-blue-200 mb-2">Journey Progress</p>
+                    <div class="w-full bg-white/20 rounded-full h-3">
+                        <div id="progressBar" class="bg-railOrange h-3 rounded-full" style="width: 0%"></div>
+                    </div>
+                    <p id="progressText" class="text-xs text-blue-100 mt-1">0% completed</p>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2 text-xs">
+                    <div>
+                        <span class="text-blue-200">Distance Covered:</span>
+                        <p id="trackDistanceCovered" class="font-bold">0 km</p>
+                    </div>
+                    <div>
+                        <span class="text-blue-200">Distance Remaining:</span>
+                        <p id="trackDistanceRemaining" class="font-bold">0 km</p>
+                    </div>
+                    <div>
+                        <span class="text-blue-200">Delay:</span>
+                        <p id="trackDelay" class="font-bold">0 min</p>
+                    </div>
+                    <div>
+                        <span class="text-blue-200">Last Update:</span>
+                        <p id="trackLastUpdate" class="font-bold text-[10px]">Just now</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3-Hour History Chart -->
+            <div id="historyCard" class="hidden bg-white rounded-2xl shadow-sm border border-slate-200/80 p-6">
+                <h4 class="text-sm font-extrabold text-slate-700 mb-4">📊 3-Hour Movement History</h4>
+                <div id="historyTimeline" class="space-y-2 max-h-96 overflow-y-auto">
+                    <!-- Timeline entries will be populated here -->
+                </div>
+            </div>
         </section>
     </main>
 
@@ -156,3 +248,140 @@
                 errorZone.classList.remove('hidden');
                 buildRakeInterface([]);
 return;}try {const response = await fetch(${BACKEND_URL}/api/v1/trains/lookup, {method: 'POST',headers: { 'Content-Type': 'application/json' },body: JSON.stringify({ from_station: fromVal, to_station: toVal, tier_filter: selectedTier })});if(response.ok) {const data = await response.json();badge.className = "text-xs font-mono font-bold bg-green-500/10 border border-green-500/30 text-green-600 px-3 py-1.5 rounded-lg";badge.innerHTML = "● Cloud Production Pipeline Active";buildRakeInterface(data.results);} else {const err = await response.json();throw new Error(err.detail || "Database Handshake Dropped");}} catch (err) {badge.className = "text-xs font-mono font-bold bg-red-500/10 border border-red-500/30 text-red-600 px-3 py-1.5 rounded-lg";badge.innerHTML = "⚠️ Pipeline Handshake Exception";errorZone.className = "bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl text-xs font-medium";errorZone.innerHTML = <strong>Cloud Connectivity Error:</strong> Target engine at <code>${BACKEND_URL}</code> could not complete execution routing. Ensure your Render instance environment flags are successfully compiled.;errorZone.classList.remove('hidden');}}searchForm.addEventListener('submit', (e) => { e.preventDefault(); triggerRakePipeline(); });window.addEventListener('DOMContentLoaded', triggerRakePipeline);
+
+        // ===== TRAIN TRACKING FUNCTIONALITY =====
+        let liveUpdateInterval = null;
+        const trackForm = document.getElementById('trackForm');
+        const toggleLiveBtn = document.getElementById('toggleLiveBtn');
+        const trackingResultsSection = document.getElementById('trackingResultsSection');
+        const trackingErrorZone = document.getElementById('trackingErrorZone');
+
+        function formatTimestamp(timestamp) {
+            const date = new Date(timestamp);
+            return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        }
+
+        function displayTrackingStatus(data) {
+            const liveStatusCard = document.getElementById('liveStatusCard');
+            liveStatusCard.classList.remove('hidden');
+            
+            document.getElementById('trackTrainName').textContent = data.train_name;
+            document.getElementById('trackTrainNumber').textContent = `Train #${data.train_no}`;
+            document.getElementById('trackCurrentStation').textContent = data.current_station;
+            document.getElementById('trackSpeed').textContent = data.current_speed_kmph + ' km/h';
+            document.getElementById('trackStatus').textContent = data.status;
+            document.getElementById('progressBar').style.width = data.percent_progress + '%';
+            document.getElementById('progressText').textContent = data.percent_progress.toFixed(1) + '% completed';
+            document.getElementById('trackDistanceCovered').textContent = data.distance_covered_km + ' km';
+            document.getElementById('trackDistanceRemaining').textContent = data.distance_remaining_km + ' km';
+            document.getElementById('trackDelay').textContent = data.delay_minutes + ' min';
+            document.getElementById('trackLastUpdate').textContent = formatTimestamp(data.timestamp);
+        }
+
+        function displayTrackingHistory(historyData) {
+            const historyCard = document.getElementById('historyCard');
+            const timeline = document.getElementById('historyTimeline');
+            historyCard.classList.remove('hidden');
+            timeline.innerHTML = '';
+
+            if(!historyData.three_hour_history || historyData.three_hour_history.length === 0) {
+                timeline.innerHTML = '<p class="text-xs text-slate-500 text-center py-4">No history available yet</p>';
+                return;
+            }
+
+            historyData.three_hour_history.forEach((entry, idx) => {
+                const timeStr = formatTimestamp(entry.timestamp);
+                timeline.innerHTML += `
+                    <div class="flex gap-3 text-xs">
+                        <div class="flex flex-col items-center">
+                            <div class="w-2 h-2 rounded-full bg-railOrange mt-2"></div>
+                            ${idx !== historyData.three_hour_history.length - 1 ? '<div class="w-0.5 h-8 bg-slate-300"></div>' : ''}
+                        </div>
+                        <div class="pb-2">
+                            <p class="font-bold text-slate-900">${entry.current_station}</p>
+                            <p class="text-slate-600">${timeStr} • ${entry.current_speed_kmph} km/h • Progress: ${entry.percent_progress.toFixed(1)}%</p>
+                        </div>
+                    </div>`;
+            });
+        }
+
+        async function fetchTrainStatus(trainNo) {
+            try {
+                const response = await fetch(`${BACKEND_URL}/api/v1/trains/${trainNo.trim().toUpperCase()}/status`);
+                if(response.ok) {
+                    return await response.json();
+                } else {
+                    throw new Error('Train not found');
+                }
+            } catch(err) {
+                throw err;
+            }
+        }
+
+        async function fetchTrainHistory(trainNo, hours = 3) {
+            try {
+                const response = await fetch(`${BACKEND_URL}/api/v1/trains/${trainNo.trim().toUpperCase()}/history?hours=${hours}`);
+                if(response.ok) {
+                    return await response.json();
+                } else {
+                    throw new Error('History not found');
+                }
+            } catch(err) {
+                throw err;
+            }
+        }
+
+        async function trackTrain(trainNo) {
+            trackingErrorZone.classList.add('hidden');
+            trackingResultsSection.classList.remove('hidden');
+            
+            try {
+                const statusData = await fetchTrainStatus(trainNo);
+                displayTrackingStatus(statusData);
+                
+                try {
+                    const historyData = await fetchTrainHistory(trainNo);
+                    displayTrackingHistory(historyData);
+                } catch(err) {
+                    console.log('History not available yet');
+                }
+            } catch(err) {
+                trackingErrorZone.className = 'bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl text-xs font-medium';
+                trackingErrorZone.innerHTML = `⚠️ <strong>Train Not Found:</strong> No tracking data available for train <strong>${trainNo}</strong>. Please check the train number.`;
+                trackingErrorZone.classList.remove('hidden');
+                document.getElementById('liveStatusCard').classList.add('hidden');
+                document.getElementById('historyCard').classList.add('hidden');
+            }
+        }
+
+        let isLiveActive = false;
+        toggleLiveBtn.addEventListener('click', () => {
+            const trainNo = document.getElementById('trainNumberInput').value.trim();
+            if(!trainNo) return;
+
+            isLiveActive = !isLiveActive;
+            toggleLiveBtn.textContent = isLiveActive ? '⏸ Stop Live Updates' : '▶ Enable Live Updates';
+            toggleLiveBtn.classList.toggle('bg-green-600', !isLiveActive);
+            toggleLiveBtn.classList.toggle('bg-red-600', isLiveActive);
+
+            if(isLiveActive) {
+                if(liveUpdateInterval) clearInterval(liveUpdateInterval);
+                liveUpdateInterval = setInterval(() => { trackTrain(trainNo); }, 10000); // Update every 10 seconds
+            } else {
+                if(liveUpdateInterval) clearInterval(liveUpdateInterval);
+                liveUpdateInterval = null;
+            }
+        });
+
+        trackForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const trainNo = document.getElementById('trainNumberInput').value.trim();
+            if(trainNo) {
+                trackTrain(trainNo);
+                if(isLiveActive && liveUpdateInterval) clearInterval(liveUpdateInterval);
+                isLiveActive = false;
+                toggleLiveBtn.textContent = '▶ Enable Live Updates';
+                toggleLiveBtn.classList.remove('bg-red-600');
+                toggleLiveBtn.classList.add('bg-green-600');
+            }
+        });
