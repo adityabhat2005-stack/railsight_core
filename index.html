@@ -97,7 +97,7 @@
         // Dynamic Pipeline Tracking Routing Selector
         const BACKEND_URL = window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost"
             ? "http://127.0.0.1:8000"
-            : window.location.origin; // Dynamically binds back to your production Render app link url context
+            : window.location.origin;
 
         function buildRakeInterface(trains) {
             targetZone.innerHTML = '';
@@ -153,3 +153,5 @@
             if(fromVal !== "MAJN" || toVal !== "CLT") {
                 errorZone.className = "bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl text-xs font-semibold";
                 errorZone.innerHTML = `⚠️ <strong>Evaluation Lock Active:</strong> Reset inputs to <strong>MAJN ➔ CLT</strong> corridor execution loop.`;
+                errorZone.classList.remove('hidden');
+                buildRakeInterface([]);
