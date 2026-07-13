@@ -5,17 +5,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Railsight Core — Real-Time Train Tracking</title>
-    <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://unpkg.com/tailwindcss@3/tailwind.js"></script>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: system-ui, -apple-system, sans-serif; }
-        .railBlue { color: #0A2540; background-color: #0A2540; }
-        .railOrange { color: #FF6B00; background-color: #FF6B00; }
-        @supports not (background-color: var(--tw-bg-opacity)) {
-            .bg-slate-50 { background-color: #f8fafc; }
-            .bg-slate-800 { background-color: #1e293b; }
+        :root {
+            --rail-blue: #0A2540;
+            --rail-orange: #FF6B00;
         }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: system-ui, -apple-system, sans-serif; background-color: #f8fafc; }
+        .bg-railBlue { background-color: var(--rail-blue); }
+        .text-railBlue { color: var(--rail-blue); }
+        .bg-railOrange { background-color: var(--rail-orange); }
+        .text-railOrange { color: var(--rail-orange); }
+        .from-railBlue { --tw-gradient-from: var(--rail-blue); }
+        .to-railOrange { --tw-gradient-to: var(--rail-orange); }
     </style>
 </head>
 <body class="bg-slate-50 min-h-screen text-slate-800">
