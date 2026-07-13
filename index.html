@@ -5,26 +5,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Railsight Core — Real-Time Train Tracking</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <style>
-        .railBlue { background-color: #0A2540; }
-        .railOrange { background-color: #FF6B00; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
-    </style>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: { 
-                        railBlue: '#0A2540', 
-                        railOrange: '#FF6B00' 
-                    }
-                }
-            }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: system-ui, -apple-system, sans-serif; }
+        .railBlue { color: #0A2540; background-color: #0A2540; }
+        .railOrange { color: #FF6B00; background-color: #FF6B00; }
+        @supports not (background-color: var(--tw-bg-opacity)) {
+            .bg-slate-50 { background-color: #f8fafc; }
+            .bg-slate-800 { background-color: #1e293b; }
         }
-    </script>
+    </style>
 </head>
-<body class="bg-slate-50 min-h-screen text-slate-800"
+<body class="bg-slate-50 min-h-screen text-slate-800">
 
     <!-- Global App Header -->
     <header class="bg-gradient-to-r from-railBlue to-blue-900 text-white shadow-xl border-b-4 border-railOrange">
