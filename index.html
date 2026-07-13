@@ -1,378 +1,488 @@
-<!-- index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Railsight Core — Real-Time Train Tracking</title>
-    <script src="https://unpkg.com/tailwindcss@3/tailwind.js"></script>
     <style>
-        :root {
-            --rail-blue: #0A2540;
-            --rail-orange: #FF6B00;
-        }
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: system-ui, -apple-system, sans-serif; background-color: #f8fafc; }
-        .bg-railBlue { background-color: var(--rail-blue); }
-        .text-railBlue { color: var(--rail-blue); }
-        .bg-railOrange { background-color: var(--rail-orange); }
-        .text-railOrange { color: var(--rail-orange); }
-        .from-railBlue { --tw-gradient-from: var(--rail-blue); }
-        .to-railOrange { --tw-gradient-to: var(--rail-orange); }
+        body { 
+            font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+            background: #f8fafc;
+            color: #1e293b;
+            line-height: 1.6;
+        }
+        .container { max-width: 1280px; margin: 0 auto; padding: 0 20px; }
+        
+        /* Colors */
+        .railBlue { background: #0A2540; color: white; }
+        .railOrange { background: #FF6B00; color: white; }
+        .bg-slate-50 { background: #f8fafc; }
+        .bg-slate-100 { background: #f1f5f9; }
+        .bg-white { background: white; }
+        .text-white { color: white; }
+        .text-slate-600 { color: #475569; }
+        .text-slate-700 { color: #334155; }
+        .text-slate-800 { color: #1e293b; }
+        
+        /* Header */
+        header {
+            background: linear-gradient(135deg, #0A2540 0%, #1e3a5f 100%);
+            border-bottom: 4px solid #FF6B00;
+            padding: 20px 0;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        header .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .logo-icon {
+            font-size: 28px;
+            background: #FF6B00;
+            padding: 8px 12px;
+            border-radius: 8px;
+        }
+        h1 { font-size: 24px; font-weight: bold; }
+        .tagline { font-size: 13px; opacity: 0.8; margin-top: 3px; }
+        .status-badge {
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.3);
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 12px;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+        
+        /* Stats Dashboard */
+        .stats-bar {
+            background: linear-gradient(135deg, #1e3a5f 0%, #0A2540 100%);
+            color: white;
+            padding: 20px 0;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        .stat-card {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 15px;
+            border-radius: 10px;
+        }
+        .stat-label { font-size: 12px; opacity: 0.8; }
+        .stat-value { font-size: 28px; font-weight: bold; margin-top: 8px; }
+        
+        /* Main Content */
+        main { padding: 30px 0; }
+        .section {
+            background: white;
+            border-radius: 16px;
+            border: 1px solid #e2e8f0;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .section h2 {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        /* Forms */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            font-size: 12px;
+            font-weight: bold;
+            color: #64748b;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: bold;
+            transition: border-color 0.3s;
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: #0A2540;
+        }
+        button {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 100%;
+        }
+        .btn-search {
+            background: linear-gradient(135deg, #0A2540 0%, #1e3a5f 100%);
+            color: white;
+        }
+        .btn-search:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(10,37,64,0.3); }
+        .btn-track {
+            background: linear-gradient(135deg, #FF6B00 0%, #e55a00 100%);
+            color: white;
+        }
+        .btn-track:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(255,107,0,0.3); }
+        .btn-live {
+            background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+            color: white;
+        }
+        .btn-live:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(22,163,74,0.3); }
+        
+        /* Train Cards */
+        .trains-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .train-card {
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .train-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+        }
+        .train-header {
+            background: linear-gradient(135deg, #0A2540 0%, #FF6B00 100%);
+            color: white;
+            padding: 15px;
+        }
+        .train-number { font-size: 24px; font-weight: bold; }
+        .train-name { font-size: 14px; opacity: 0.9; margin-top: 5px; }
+        .train-body { padding: 15px; background: white; }
+        .train-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        .train-info { text-align: center; }
+        .train-info-label { font-size: 12px; color: #64748b; }
+        .train-info-value { font-size: 18px; font-weight: bold; color: #0A2540; }
+        .time-box { font-size: 20px; font-weight: bold; }
+        .route-line {
+            text-align: center;
+            font-size: 12px;
+            color: #94a3b8;
+        }
+        
+        /* Tracking Card */
+        .tracking-card {
+            background: linear-gradient(135deg, #0A2540 0%, #1e3a5f 100%);
+            color: white;
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 25px;
+        }
+        .tracking-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .live-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(34,197,94,0.3);
+            border: 1px solid rgba(34,197,94,0.5);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .live-dot {
+            width: 8px;
+            height: 8px;
+            background: #22c55e;
+            border-radius: 50%;
+            animation: pulse 1s infinite;
+        }
+        .progress-bar {
+            background: rgba(255,255,255,0.2);
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #FF6B00, #ffa500);
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+        
+        /* Timeline */
+        .timeline {
+            position: relative;
+            padding: 20px 0;
+        }
+        .timeline-item {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            position: relative;
+        }
+        .timeline-dot {
+            width: 12px;
+            height: 12px;
+            background: #FF6B00;
+            border-radius: 50%;
+            margin-top: 5px;
+            flex-shrink: 0;
+        }
+        .timeline-content {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 13px;
+        }
+        .timeline-station { font-weight: bold; color: #1e293b; }
+        .timeline-details { color: #64748b; margin-top: 5px; }
+        
+        /* Utilities */
+        .hidden { display: none; }
+        .mt-4 { margin-top: 15px; }
+        .mb-4 { margin-bottom: 15px; }
+        .text-center { text-align: center; }
+        .error-box {
+            background: #fee2e2;
+            border: 1px solid #fecaca;
+            color: #991b1b;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #94a3b8;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            header .container { flex-direction: column; align-items: flex-start; }
+            .form-grid { grid-template-columns: 1fr; }
+            .train-row { grid-template-columns: 1fr; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+        }
     </style>
 </head>
-<body class="bg-slate-50 min-h-screen text-slate-800">
-
-    <!-- Global App Header -->
-    <header class="bg-gradient-to-r from-railBlue to-blue-900 text-white shadow-xl border-b-4 border-railOrange">
-        <div class="max-w-6xl mx-auto px-6 py-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div>
-                <div class="flex items-center space-x-3">
-                    <div class="bg-railOrange text-white text-xl font-black tracking-widest px-3 py-1.5 rounded-lg shadow-lg">🚂</div>
-                    <div>
-                        <h1 class="text-2xl font-extrabold tracking-tight">Railsight Core</h1>
-                        <p class="text-xs text-blue-200 mt-0.5 font-medium">Real-Time Train Telemetry System</p>
-                    </div>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="container">
+            <div class="logo-section">
+                <div class="logo-icon">🚂</div>
+                <div>
+                    <h1>Railsight Core</h1>
+                    <p class="tagline">Real-Time Train Telemetry System</p>
                 </div>
             </div>
-            <div class="flex items-center gap-3">
-                <div id="connectionBadge" class="text-xs font-mono font-bold bg-amber-500/20 border border-amber-400/50 text-amber-300 px-4 py-2 rounded-lg flex items-center space-x-2 backdrop-blur-sm">
-                    <span class="animate-pulse">⏳</span>
-                    <span>Connecting...</span>
-                </div>
-            </div>
+            <div class="status-badge" id="connectionBadge">⏳ Connecting...</div>
         </div>
     </header>
 
-    <!-- Quick Stats Dashboard -->
-    <div class="bg-gradient-to-r from-blue-900 to-railBlue text-white">
-        <div class="max-w-6xl mx-auto px-6 py-4">
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                <div class="bg-white/10 backdrop-blur-sm rounded-lg p-3 border border-white/20">
-                    <p class="text-xs text-blue-200 font-medium">Active Trains</p>
-                    <p id="activeTrainsCount" class="text-2xl font-extrabold mt-1">0</p>
+    <!-- Stats Bar -->
+    <div class="stats-bar">
+        <div class="container">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Active Trains</div>
+                    <div class="stat-value" id="activeTrainsCount">0</div>
                 </div>
-                <div class="bg-white/10 backdrop-blur-sm rounded-lg p-3 border border-white/20">
-                    <p class="text-xs text-blue-200 font-medium">On-Time</p>
-                    <p id="onTimeCount" class="text-2xl font-extrabold mt-1 text-green-300">0</p>
+                <div class="stat-card">
+                    <div class="stat-label">On-Time</div>
+                    <div class="stat-value" id="onTimeCount" style="color: #4ade80;">0</div>
                 </div>
-                <div class="bg-white/10 backdrop-blur-sm rounded-lg p-3 border border-white/20">
-                    <p class="text-xs text-blue-200 font-medium">Delayed</p>
-                    <p id="delayedCount" class="text-2xl font-extrabold mt-1 text-orange-300">0</p>
+                <div class="stat-card">
+                    <div class="stat-label">Delayed</div>
+                    <div class="stat-value" id="delayedCount" style="color: #fbbf24;">0</div>
                 </div>
-                <div class="bg-white/10 backdrop-blur-sm rounded-lg p-3 border border-white/20">
-                    <p class="text-xs text-blue-200 font-medium">Avg Speed</p>
-                    <p id="avgSpeed" class="text-2xl font-extrabold mt-1 text-blue-300">-- km/h</p>
+                <div class="stat-card">
+                    <div class="stat-label">Avg Speed</div>
+                    <div class="stat-value" id="avgSpeed" style="color: #60a5fa;">-- km/h</div>
                 </div>
             </div>
         </div>
     </div>
 
-        <!-- Institutional Presentation Scope Notification -->
-        <div class="bg-gradient-to-r from-blue-50 to-cyan-50 border-l-4 border-blue-600 p-4 rounded-xl shadow-md flex items-start space-x-3">
-            <span class="text-2xl">🛤️</span>
-            <div>
-                <h4 class="text-sm font-bold text-blue-900 uppercase tracking-wider">Route: Mangaluru (MAJN) → Kozhikode (CLT)</h4>
-                <p class="text-sm text-blue-700 mt-1 leading-relaxed font-medium">
-                    Live tracking for unreserved trains on the Konkan Railway corridor. Real-time GPS positioning, speed monitoring, and delay alerts for all services.
-                </p>
-            </div>
+    <!-- Main Content -->
+    <main class="container">
+        <!-- Route Info -->
+        <div class="section" style="background: linear-gradient(135deg, #dbeafe 0%, #cffafe 100%); border-color: #06b6d4;">
+            <h2>🛤️ Route Information</h2>
+            <p style="color: #0c4a6e; font-weight: 500;">
+                Mangaluru Junction (MAJN) → Kozhikode Main (CLT)
+            </p>
+            <p style="color: #0a5568; font-size: 14px; margin-top: 8px;">
+                Live tracking for unreserved trains on the Konkan Railway corridor. Real-time GPS positioning, speed monitoring, and delay alerts.
+            </p>
         </div>
 
-        <!-- Main Workspace Container -->
-        <main class="space-y-6">
-
-        <!-- Input Query Engine -->
-        <section class="bg-white rounded-2xl shadow-md border border-slate-200 p-6">
-            <h3 class="text-lg font-extrabold text-railBlue mb-5 flex items-center space-x-2">
-                <span>🔍</span>
-                <span>Search Trains</span>
-            </h3>
-            <form id="searchForm" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div>
-                    <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">From Station</label>
-                    <input type="text" id="fromStation" value="MAJN" required class="w-full bg-slate-50 border-2 border-slate-200 rounded-lg px-4 py-2.5 text-sm font-bold uppercase focus:border-railBlue focus:outline-none transition">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">To Station</label>
-                    <input type="text" id="toStation" value="CLT" required class="w-full bg-slate-50 border-2 border-slate-200 rounded-lg px-4 py-2.5 text-sm font-bold uppercase focus:border-railBlue focus:outline-none transition">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">Train Type</label>
-                    <select id="tierFilter" class="w-full bg-slate-50 border-2 border-slate-200 rounded-lg px-3 py-2.5 text-sm font-bold focus:border-railBlue focus:outline-none transition">
-                        <option value="ALL">All Trains</option>
-                        <option value="AMRIT BHARAT (GS)">Amrit Bharat</option>
-                        <option value="ANTYODAYA EXPRESS">Antyodaya</option>
-                        <option value="DE-RESERVED SLEEPER">De-Reserved</option>
-                        <option value="EXPRESS TIER">Express</option>
-                    </select>
-                </div>
-                <div class="flex items-end">
-                    <button type="submit" class="w-full bg-gradient-to-r from-railBlue to-blue-900 hover:shadow-lg text-white font-bold rounded-lg py-2.5 text-sm transition-all shadow-md">
-                        🚂 Search Trains
-                    </button>
-                </div>
-            </form>
-        </section>
-
-        <!-- Track My Train Section -->
-        <section class="bg-white rounded-2xl shadow-md border border-slate-200 p-6">
-            <h3 class="text-lg font-extrabold text-railOrange mb-5 flex items-center space-x-2">
-                <span>📍</span>
-                <span>Track Train Live</span>
-            </h3>
-            <form id="trackForm" class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div>
-                    <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">Train Number</label>
-                    <input type="text" id="trainNumberInput" placeholder="e.g., 12621" class="w-full bg-slate-50 border-2 border-slate-200 rounded-lg px-4 py-2.5 text-sm font-bold uppercase focus:border-railOrange focus:outline-none transition">
-                </div>
-                <div class="flex items-end">
-                    <button type="submit" class="w-full bg-gradient-to-r from-railOrange to-orange-700 hover:shadow-lg text-white font-bold rounded-lg py-2.5 text-sm transition-all shadow-md">
-                        🎯 Track Now
-                    </button>
-                </div>
-                <div class="flex items-end">
-                    <button type="button" id="toggleLiveBtn" class="w-full bg-gradient-to-r from-green-600 to-green-700 hover:shadow-lg text-white font-bold rounded-lg py-2.5 text-sm transition-all shadow-md">
-                        ▶ Live Updates
-                    </button>
-                </div>
-            </form>
-        </section>
-
-        <!-- Dynamic Output Stream Board -->
-        <section class="space-y-4">
-            <div class="flex justify-between items-center px-2">
-                <h2 class="text-lg font-extrabold text-slate-800 flex items-center space-x-2">
-                    <span>🚄</span>
-                    <span>Available Trains</span>
-                </h2>
-                <span id="trainCount" class="text-sm font-bold bg-gradient-to-r from-railBlue to-blue-900 text-white px-4 py-1.5 rounded-full border border-blue-800 shadow-md">0 Trains</span>
-            </div>
-            <div id="errorZone" class="hidden rounded-xl border p-4 shadow-md text-sm font-medium"></div>
-            <div id="trainListingZone" class="grid grid-cols-1 gap-4"></div>
-        </section>
-
-        <!-- Live Train Tracking Display -->
-        <section id="trackingResultsSection" class="hidden space-y-4">
-            <div class="px-2 mb-4">
-                <h2 class="text-lg font-extrabold text-railOrange flex items-center space-x-2">
-                    <span>📡</span>
-                    <span>Real-Time Tracking Dashboard</span>
-                </h2>
-            </div>
-            <div id="trackingErrorZone" class="hidden rounded-xl border p-4 shadow-md text-sm font-medium"></div>
-            
-            <!-- Live Status Card -->
-            <div id="liveStatusCard" class="hidden bg-gradient-to-br from-railBlue via-blue-900 to-blue-800 text-white rounded-2xl shadow-xl p-7 border border-blue-600/50">
-                <div class="flex justify-between items-start mb-6">
+        <!-- Search Trains -->
+        <div class="section">
+            <h2>🔍 Search Trains</h2>
+            <form id="searchForm">
+                <div class="form-grid">
                     <div>
-                        <h3 id="trackTrainName" class="text-2xl font-extrabold">Train Name</h3>
-                        <p id="trackTrainNumber" class="text-sm text-blue-200 font-mono mt-1">Train #12621</p>
+                        <label>From Station</label>
+                        <input type="text" id="fromStation" value="MAJN" required>
                     </div>
-                    <div class="flex items-center gap-2">
-                        <div id="liveIndicator" class="flex items-center gap-1 bg-green-500/30 px-3 py-1.5 rounded-full border border-green-400 animate-pulse">
-                            <span class="w-2.5 h-2.5 rounded-full bg-green-400 animate-pulse"></span>
-                            <span class="text-xs font-bold">LIVE</span>
+                    <div>
+                        <label>To Station</label>
+                        <input type="text" id="toStation" value="CLT" required>
+                    </div>
+                    <div>
+                        <label>Train Type</label>
+                        <select id="tierFilter">
+                            <option value="ALL">All Trains</option>
+                            <option value="AMRIT BHARAT (GS)">Amrit Bharat</option>
+                            <option value="ANTYODAYA EXPRESS">Antyodaya</option>
+                            <option value="DE-RESERVED SLEEPER">De-Reserved</option>
+                            <option value="EXPRESS TIER">Express</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label>&nbsp;</label>
+                        <button type="submit" class="btn-search">🚂 Search Trains</button>
+                    </div>
+                </div>
+            </form>
+            <div id="errorZone" class="hidden"></div>
+        </div>
+
+        <!-- Track My Train -->
+        <div class="section">
+            <h2>📍 Track Train Live</h2>
+            <form id="trackForm">
+                <div class="form-grid">
+                    <div>
+                        <label>Train Number</label>
+                        <input type="text" id="trainNumberInput" placeholder="e.g., 12621">
+                    </div>
+                    <div>
+                        <label>&nbsp;</label>
+                        <button type="submit" class="btn-track">🎯 Track Now</button>
+                    </div>
+                    <div>
+                        <label>&nbsp;</label>
+                        <button type="button" id="toggleLiveBtn" class="btn-live">▶ Live Updates</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Available Trains -->
+        <div class="section">
+            <h2>🚄 Available Trains <span id="trainCount" style="background: #0A2540; color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold;">(0)</span></h2>
+            <div id="trainListingZone" class="trains-grid mt-4"></div>
+        </div>
+
+        <!-- Live Tracking -->
+        <div id="trackingResultsSection" class="hidden">
+            <div class="section">
+                <h2>📡 Real-Time Train Tracking</h2>
+                <div id="trackingErrorZone" class="hidden error-box"></div>
+                
+                <div id="liveStatusCard" class="hidden tracking-card">
+                    <div class="tracking-header">
+                        <div>
+                            <div style="font-size: 20px; font-weight: bold;" id="trackTrainName">Train Name</div>
+                            <div style="font-size: 12px; opacity: 0.8;" id="trackTrainNumber">Train #</div>
+                        </div>
+                        <div class="live-indicator">
+                            <div class="live-dot"></div>
+                            <span>LIVE</span>
+                        </div>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                        <div style="background: rgba(255,255,255,0.1); padding: 12px; border-radius: 8px;">
+                            <div style="font-size: 11px; opacity: 0.8;">Current Station</div>
+                            <div style="font-size: 16px; font-weight: bold; margin-top: 5px;" id="trackCurrentStation">--</div>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.1); padding: 12px; border-radius: 8px;">
+                            <div style="font-size: 11px; opacity: 0.8;">Speed</div>
+                            <div style="font-size: 16px; font-weight: bold; margin-top: 5px;" id="trackSpeed">0 km/h</div>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.1); padding: 12px; border-radius: 8px;">
+                            <div style="font-size: 11px; opacity: 0.8;">Status</div>
+                            <div style="font-size: 16px; font-weight: bold; margin-top: 5px;" id="trackStatus">RUNNING</div>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.1); padding: 12px; border-radius: 8px;">
+                            <div style="font-size: 11px; opacity: 0.8;">Delay</div>
+                            <div style="font-size: 16px; font-weight: bold; margin-top: 5px;" id="trackDelay">0 min</div>
+                        </div>
+                    </div>
+
+                    <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span style="font-size: 12px;">Journey Progress</span>
+                            <span style="font-size: 12px; font-weight: bold;" id="progressText">0%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progressBar" style="width: 0%;"></div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 11px; opacity: 0.8; margin-top: 8px;">
+                            <span>MAJN (Start)</span>
+                            <span><span id="trackDistanceCovered">0</span> km / <span id="trackDistanceRemaining">0</span> km</span>
+                            <span>CLT (End)</span>
                         </div>
                     </div>
                 </div>
-                
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-6">
-                    <div class="bg-white/10 backdrop-blur-sm rounded-lg p-3 border border-white/20">
-                        <p class="text-xs text-blue-200 mb-1 font-medium">Current Station</p>
-                        <p id="trackCurrentStation" class="text-sm font-bold">--</p>
-                    </div>
-                    <div class="bg-white/10 backdrop-blur-sm rounded-lg p-3 border border-white/20">
-                        <p class="text-xs text-blue-200 mb-1 font-medium">Speed</p>
-                        <p id="trackSpeed" class="text-sm font-bold">0 km/h</p>
-                    </div>
-                    <div class="bg-white/10 backdrop-blur-sm rounded-lg p-3 border border-white/20">
-                        <p class="text-xs text-blue-200 mb-1 font-medium">Status</p>
-                        <p id="trackStatus" class="text-sm font-bold px-2 py-1 rounded bg-green-500/30 inline-block">RUNNING</p>
-                    </div>
-                    <div class="bg-white/10 backdrop-blur-sm rounded-lg p-3 border border-white/20">
-                        <p class="text-xs text-blue-200 mb-1 font-medium">Delay</p>
-                        <p id="trackDelay" class="text-sm font-bold">0 min</p>
-                    </div>
-                </div>
 
-                <div class="bg-white/10 backdrop-blur-sm rounded-lg p-4 mb-4 border border-white/20">
-                    <div class="flex justify-between items-center mb-2">
-                        <p class="text-xs text-blue-200 font-medium">Journey Progress</p>
-                        <p id="progressText" class="text-sm font-bold">0% completed</p>
-                    </div>
-                    <div class="w-full bg-white/20 rounded-full h-4">
-                        <div id="progressBar" class="bg-gradient-to-r from-railOrange to-orange-500 h-4 rounded-full transition-all duration-500" style="width: 0%"></div>
-                    </div>
-                    <div class="flex justify-between mt-2 text-xs text-blue-200">
-                        <span>MAJN (Start)</span>
-                        <span id="trackDistanceCovered">0 km</span> / <span id="trackDistanceRemaining">0 km</span>
-                        <span>CLT (End)</span>
-                    </div>
-                </div>
-
-                <div class="bg-white/10 backdrop-blur-sm rounded-lg p-3 border border-white/20 text-xs">
-                    <p class="text-blue-200">Last Updated: <span id="trackLastUpdate" class="font-mono font-bold text-blue-100">Just now</span></p>
+                <div id="historyCard" class="hidden section" style="background: white; margin-top: 20px;">
+                    <h2>📊 3-Hour Movement Timeline</h2>
+                    <div id="historyTimeline" class="timeline mt-4"></div>
                 </div>
             </div>
-
-            <!-- 3-Hour History Chart -->
-            <div id="historyCard" class="hidden bg-white rounded-2xl shadow-md border border-slate-200 p-6">
-                <h4 class="text-lg font-extrabold text-slate-800 mb-4 flex items-center space-x-2">
-                    <span>📊</span>
-                    <span>3-Hour Movement Timeline</span>
-                </h4>
-                <div id="historyTimeline" class="space-y-2 max-h-96 overflow-y-auto pr-2">
-                    <!-- Timeline entries will be populated here -->
-                </div>
-            </div>
-        </section>
+        </div>
     </main>
 
     <script>
-        const searchForm = document.getElementById('searchForm');
-        const badge = document.getElementById('connectionBadge');
-        const errorZone = document.getElementById('errorZone');
-        const targetZone = document.getElementById('trainListingZone');
-
-        // Dynamic Pipeline Tracking Routing Selector
         const BACKEND_URL = window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost"
             ? "http://127.0.0.1:8000"
             : "https://railsight-backend.onrender.com";
 
         console.log("🚂 Railsight Backend URL:", BACKEND_URL);
 
-        function buildRakeInterface(trains) {
-            targetZone.innerHTML = '';
-            document.getElementById('trainCount').textContent = `${trains.length} Trains`;
+        const badge = document.getElementById('connectionBadge');
+        const searchForm = document.getElementById('searchForm');
+        const errorZone = document.getElementById('errorZone');
+        const targetZone = document.getElementById('trainListingZone');
 
-            // Update stats
-            document.getElementById('activeTrainsCount').textContent = trains.length;
-
-            if(trains.length === 0) {
-                targetZone.innerHTML = `<div class="bg-gradient-to-br from-slate-50 to-slate-100 border-2 border-dashed border-slate-300 rounded-2xl p-12 text-center">
-                    <p class="text-slate-500 text-lg font-semibold">🚫 No trains found</p>
-                    <p class="text-slate-400 text-sm mt-2">Try searching with different filters</p>
-                </div>`;
-                return;
-            }
-
-            trains.forEach(train => {
-                const tierColor = {
-                    'AMRIT BHARAT (GS)': 'from-green-500 to-emerald-600',
-                    'ANTYODAYA EXPRESS': 'from-purple-500 to-indigo-600',
-                    'DE-RESERVED SLEEPER': 'from-blue-500 to-blue-600',
-                    'EXPRESS TIER': 'from-orange-500 to-red-600'
-                }[train.tier] || 'from-slate-500 to-slate-600';
-
-                targetZone.innerHTML += `
-                    <div class="bg-white rounded-2xl shadow-md border border-slate-200 overflow-hidden hover:shadow-lg transition-shadow">
-                        <div class="bg-gradient-to-r ${tierColor} px-6 py-4 text-white flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                            <div class="flex items-center space-x-3">
-                                <span class="text-2xl">🚂</span>
-                                <div>
-                                    <h4 class="font-extrabold text-lg">${train.trainNumber}</h4>
-                                    <p class="text-sm text-white/80">${train.name}</p>
-                                </div>
-                            </div>
-                            <span class="text-xs font-bold bg-white/20 backdrop-blur px-3 py-1.5 rounded-full">${train.tier}</span>
-                        </div>
-                        <div class="p-6">
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
-                                <div class="flex items-center justify-between md:justify-start gap-4">
-                                    <div>
-                                        <p class="text-xs text-slate-500 font-bold">DEPARTURE</p>
-                                        <p class="text-2xl font-extrabold text-slate-900">${train.departure}</p>
-                                        <p class="text-xs text-slate-600 font-mono">MAJN</p>
-                                    </div>
-                                    <div class="flex-1 flex flex-col items-center">
-                                        <span class="text-xs text-slate-400 font-mono mb-2">${train.duration}</span>
-                                        <div class="w-full h-1 bg-gradient-to-r from-slate-200 to-slate-200 rounded-full relative">
-                                            <div class="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-railOrange shadow-md"></div>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <p class="text-xs text-slate-500 font-bold">ARRIVAL</p>
-                                        <p class="text-2xl font-extrabold text-slate-900">${train.arrival}</p>
-                                        <p class="text-xs text-slate-600 font-mono">CLT</p>
-                                    </div>
-                                </div>
-                                <div class="flex items-center justify-center md:justify-start">
-                                    <div class="bg-slate-50 border-2 border-slate-200 px-4 py-3 rounded-lg text-center">
-                                        <p class="text-xs text-slate-500 font-bold mb-1">Occupancy</p>
-                                        <p class="font-extrabold text-lg ${train.densityColor}">${train.liveDensity}</p>
-                                    </div>
-                                </div>
-                                <div class="flex items-center justify-center md:justify-end">
-                                    <div class="text-center">
-                                        <p class="text-xs text-slate-500 font-bold mb-1">Base Fare</p>
-                                        <p class="text-3xl font-black text-railOrange">₹${train.baseFare}</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm">
-                                <span class="font-bold text-blue-900">${train.justificationText}</span>
-                            </div>
-                        </div>
-                    </div>`;
-            });
-        }
-
-        async function triggerRakePipeline() {
-            errorZone.classList.add('hidden');
-            const fromVal = document.getElementById('fromStation').value.trim().toUpperCase();
-            const toVal = document.getElementById('toStation').value.trim().toUpperCase();
-            const selectedTier = document.getElementById('tierFilter').value;
-
-            if(fromVal !== "MAJN" || toVal !== "CLT") {
-                errorZone.className = "bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl text-sm font-semibold";
-                errorZone.innerHTML = `⚠️ <strong>Evaluation Lock Active:</strong> Reset inputs to <strong>MAJN ➔ CLT</strong> corridor.`;
-                errorZone.classList.remove('hidden');
-                buildRakeInterface([]);
-                return;
-            }
-
-            try {
-                console.log("📡 Fetching trains from:", BACKEND_URL + "/api/v1/trains/lookup");
-                badge.innerHTML = "⏳ Fetching trains...";
-                
-                const response = await fetch(`${BACKEND_URL}/api/v1/trains/lookup`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        from_station: fromVal, 
-                        to_station: toVal, 
-                        tier_filter: selectedTier 
-                    })
-                });
-
-                console.log("Response status:", response.status);
-
-                if(response.ok) {
-                    const data = await response.json();
-                    console.log("✅ Data received:", data);
-                    badge.className = "text-xs font-mono font-bold bg-green-500/10 border border-green-500/30 text-green-600 px-3 py-1.5 rounded-lg";
-                    badge.innerHTML = "● Cloud Production Pipeline Active";
-                    buildRakeInterface(data.results || []);
-                } else {
-                    const err = await response.json();
-                    console.error("❌ API Error:", err);
-                    throw new Error(err.detail || `Error ${response.status}`);
-                }
-            } catch (err) {
-                console.error("🔴 Pipeline Error:", err);
-                badge.className = "text-xs font-mono font-bold bg-red-500/10 border border-red-500/30 text-red-600 px-3 py-1.5 rounded-lg";
-                badge.innerHTML = "⚠️ Connection Error";
-                errorZone.className = "bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl text-sm font-medium";
-                errorZone.innerHTML = `<strong>Error:</strong> ${err.message}<br><small>Backend: ${BACKEND_URL}</small>`;
-                errorZone.classList.remove('hidden');
-                buildRakeInterface([]);
-            }
-        }
-
-        searchForm.addEventListener('submit', (e) => { e.preventDefault(); triggerRakePipeline(); });
-        
-        // Demo data for testing UI (loads if API fails)
         const DEMO_TRAINS = [
             {
                 trainNumber: '12621',
@@ -383,7 +493,7 @@
                 tier: 'AMRIT BHARAT (GS)',
                 baseFare: 450,
                 liveDensity: 'HIGH',
-                densityColor: 'bg-red-100 border-red-300 text-red-700',
+                densityColor: 'bg-red-50 border-red-300 text-red-700',
                 justificationText: 'High volume unreserved availability'
             },
             {
@@ -412,164 +522,107 @@
             }
         ];
 
-        // Show demo data after 3 seconds if API fails
-        setTimeout(() => {
-            if(document.getElementById('trainCount').textContent === '0 Trains') {
-                console.log("📊 Loading demo data (API timeout)");
-                buildRakeInterface(DEMO_TRAINS);
-                badge.innerHTML = "⚠️ Demo Data (API Slow)";
-                badge.className = "text-xs font-mono font-bold bg-amber-500/20 border border-amber-400/50 text-amber-300 px-4 py-2 rounded-lg";
-            }
-        }, 4000);
+        function buildRakeInterface(trains) {
+            targetZone.innerHTML = '';
+            document.getElementById('trainCount').textContent = `(${trains.length})`;
+            document.getElementById('activeTrainsCount').textContent = trains.length;
 
-        window.addEventListener('DOMContentLoaded', triggerRakePipeline);
-
-        // ===== TRAIN TRACKING FUNCTIONALITY =====
-        let liveUpdateInterval = null;
-        const trackForm = document.getElementById('trackForm');
-        const toggleLiveBtn = document.getElementById('toggleLiveBtn');
-        const trackingResultsSection = document.getElementById('trackingResultsSection');
-        const trackingErrorZone = document.getElementById('trackingErrorZone');
-
-        function formatTimestamp(timestamp) {
-            const date = new Date(timestamp);
-            return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-        }
-
-        function displayTrackingStatus(data) {
-            const liveStatusCard = document.getElementById('liveStatusCard');
-            liveStatusCard.classList.remove('hidden');
-            
-            document.getElementById('trackTrainName').textContent = data.train_name;
-            document.getElementById('trackTrainNumber').textContent = `Train #${data.train_no}`;
-            document.getElementById('trackCurrentStation').textContent = data.current_station;
-            document.getElementById('trackSpeed').textContent = data.current_speed_kmph + ' km/h';
-            document.getElementById('trackStatus').textContent = data.status;
-            document.getElementById('progressBar').style.width = data.percent_progress + '%';
-            document.getElementById('progressText').textContent = data.percent_progress.toFixed(1) + '% completed';
-            document.getElementById('trackDistanceCovered').textContent = data.distance_covered_km + ' km';
-            document.getElementById('trackDistanceRemaining').textContent = data.distance_remaining_km + ' km';
-            document.getElementById('trackDelay').textContent = data.delay_minutes + ' min';
-            document.getElementById('trackLastUpdate').textContent = formatTimestamp(data.timestamp);
-        }
-
-        function displayTrackingHistory(historyData) {
-            const historyCard = document.getElementById('historyCard');
-            const timeline = document.getElementById('historyTimeline');
-            historyCard.classList.remove('hidden');
-            timeline.innerHTML = '';
-
-            if(!historyData.three_hour_history || historyData.three_hour_history.length === 0) {
-                timeline.innerHTML = '<p class="text-sm text-slate-500 text-center py-6">📭 No history available yet</p>';
+            if(trains.length === 0) {
+                targetZone.innerHTML = '<div class="empty-state">🚫 No trains found</div>';
                 return;
             }
 
-            historyData.three_hour_history.forEach((entry, idx) => {
-                const timeStr = formatTimestamp(entry.timestamp);
-                const isLast = idx === historyData.three_hour_history.length - 1;
-                const speedIndicator = entry.current_speed_kmph > 70 ? '🚀' : entry.current_speed_kmph > 60 ? '🚄' : '🚂';
-                
-                timeline.innerHTML += `
-                    <div class="flex gap-4">
-                        <div class="flex flex-col items-center">
-                            <div class="w-3.5 h-3.5 rounded-full ${isLast ? 'bg-gradient-to-r from-railOrange to-orange-500 ring-2 ring-orange-300' : 'bg-blue-400'} shadow-md"></div>
-                            ${!isLast ? '<div class="w-1 h-12 bg-gradient-to-b from-blue-300 to-slate-200 mt-1"></div>' : ''}
-                        </div>
-                        <div class="pb-2 flex-1">
-                            <div class="bg-slate-50 rounded-lg p-3 border border-slate-200 hover:border-slate-300 transition">
-                                <div class="flex justify-between items-start mb-1">
-                                    <p class="font-bold text-slate-900">${speedIndicator} ${entry.current_station}</p>
-                                    <span class="text-xs font-mono bg-slate-200 px-2 py-0.5 rounded">${timeStr}</span>
-                                </div>
-                                <div class="grid grid-cols-3 gap-2 text-xs">
-                                    <div><span class="text-slate-600">Speed:</span> <span class="font-bold text-slate-900">${entry.current_speed_kmph} km/h</span></div>
-                                    <div><span class="text-slate-600">Progress:</span> <span class="font-bold text-railOrange">${entry.percent_progress.toFixed(1)}%</span></div>
-                                    <div><span class="text-slate-600">Delay:</span> <span class="font-bold ${entry.delay_minutes > 10 ? 'text-red-600' : 'text-green-600'}">${entry.delay_minutes} min</span></div>
-                                </div>
+            trains.forEach(train => {
+                const card = document.createElement('div');
+                card.className = 'train-card';
+                card.innerHTML = `
+                    <div class="train-header">
+                        <div class="train-number">${train.trainNumber}</div>
+                        <div class="train-name">${train.name}</div>
+                    </div>
+                    <div class="train-body">
+                        <div class="train-row">
+                            <div class="train-info">
+                                <div class="train-info-label">DEPARTURE</div>
+                                <div class="time-box">${train.departure}</div>
+                                <div class="route-line">MAJN</div>
+                            </div>
+                            <div class="train-info">
+                                <div class="train-info-label">DURATION</div>
+                                <div style="font-size: 14px; margin-top: 5px;">${train.duration}</div>
+                            </div>
+                            <div class="train-info">
+                                <div class="train-info-label">ARRIVAL</div>
+                                <div class="time-box">${train.arrival}</div>
+                                <div class="route-line">CLT</div>
                             </div>
                         </div>
-                    </div>`;
+                        <div style="text-align: center; margin-bottom: 12px; padding: 8px; background: #f1f5f9; border-radius: 6px;">
+                            <div style="font-size: 12px; color: #64748b;">Occupancy</div>
+                            <div style="font-size: 14px; font-weight: bold; color: #0A2540; margin-top: 4px;">${train.liveDensity}</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 12px; color: #64748b;">Base Fare</div>
+                            <div style="font-size: 24px; font-weight: bold; color: #FF6B00;">₹${train.baseFare}</div>
+                        </div>
+                    </div>
+                `;
+                targetZone.appendChild(card);
             });
-            });
         }
 
-        async function fetchTrainStatus(trainNo) {
-            try {
-                const response = await fetch(`${BACKEND_URL}/api/v1/trains/${trainNo.trim().toUpperCase()}/status`);
-                if(response.ok) {
-                    return await response.json();
-                } else {
-                    throw new Error('Train not found');
-                }
-            } catch(err) {
-                throw err;
+        async function triggerRakePipeline() {
+            errorZone.classList.add('hidden');
+            const fromVal = document.getElementById('fromStation').value.trim().toUpperCase();
+            const toVal = document.getElementById('toStation').value.trim().toUpperCase();
+            const selectedTier = document.getElementById('tierFilter').value;
+
+            if(fromVal !== "MAJN" || toVal !== "CLT") {
+                errorZone.innerHTML = '⚠️ Please use MAJN → CLT corridor';
+                errorZone.classList.remove('hidden');
+                buildRakeInterface([]);
+                return;
             }
-        }
 
-        async function fetchTrainHistory(trainNo, hours = 3) {
             try {
-                const response = await fetch(`${BACKEND_URL}/api/v1/trains/${trainNo.trim().toUpperCase()}/history?hours=${hours}`);
-                if(response.ok) {
-                    return await response.json();
-                } else {
-                    throw new Error('History not found');
-                }
-            } catch(err) {
-                throw err;
-            }
-        }
-
-        async function trackTrain(trainNo) {
-            trackingErrorZone.classList.add('hidden');
-            trackingResultsSection.classList.remove('hidden');
-            
-            try {
-                const statusData = await fetchTrainStatus(trainNo);
-                displayTrackingStatus(statusData);
+                console.log("📡 Fetching trains...");
+                badge.textContent = "⏳ Fetching...";
                 
-                try {
-                    const historyData = await fetchTrainHistory(trainNo);
-                    displayTrackingHistory(historyData);
-                } catch(err) {
-                    console.log('History not available yet');
+                const response = await fetch(`${BACKEND_URL}/api/v1/trains/lookup`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        from_station: fromVal, 
+                        to_station: toVal, 
+                        tier_filter: selectedTier 
+                    })
+                });
+
+                if(response.ok) {
+                    const data = await response.json();
+                    console.log("✅ Data received:", data);
+                    badge.textContent = "● Connected";
+                    badge.style.background = "rgba(34,197,94,0.3)";
+                    buildRakeInterface(data.results || []);
+                } else {
+                    throw new Error(`Error ${response.status}`);
                 }
-            } catch(err) {
-                trackingErrorZone.className = 'bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl text-xs font-medium';
-                trackingErrorZone.innerHTML = `⚠️ <strong>Train Not Found:</strong> No tracking data available for train <strong>${trainNo}</strong>. Please check the train number.`;
-                trackingErrorZone.classList.remove('hidden');
-                document.getElementById('liveStatusCard').classList.add('hidden');
-                document.getElementById('historyCard').classList.add('hidden');
+            } catch (err) {
+                console.error("🔴 Error:", err);
+                badge.textContent = "⚠️ Connection Error";
+                badge.style.background = "rgba(239,68,68,0.3)";
+                errorZone.textContent = `Error: ${err.message}`;
+                errorZone.classList.remove('hidden');
+                buildRakeInterface(DEMO_TRAINS);
             }
         }
 
-        let isLiveActive = false;
-        toggleLiveBtn.addEventListener('click', () => {
-            const trainNo = document.getElementById('trainNumberInput').value.trim();
-            if(!trainNo) return;
+        searchForm.addEventListener('submit', (e) => { e.preventDefault(); triggerRakePipeline(); });
 
-            isLiveActive = !isLiveActive;
-            toggleLiveBtn.textContent = isLiveActive ? '⏸ Stop Live Updates' : '▶ Enable Live Updates';
-            toggleLiveBtn.classList.toggle('bg-green-600', !isLiveActive);
-            toggleLiveBtn.classList.toggle('bg-red-600', isLiveActive);
-
-            if(isLiveActive) {
-                if(liveUpdateInterval) clearInterval(liveUpdateInterval);
-                liveUpdateInterval = setInterval(() => { trackTrain(trainNo); }, 10000); // Update every 10 seconds
-            } else {
-                if(liveUpdateInterval) clearInterval(liveUpdateInterval);
-                liveUpdateInterval = null;
-            }
-        });
-
-        trackForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const trainNo = document.getElementById('trainNumberInput').value.trim();
-            if(trainNo) {
-                trackTrain(trainNo);
-                if(isLiveActive && liveUpdateInterval) clearInterval(liveUpdateInterval);
-                isLiveActive = false;
-                toggleLiveBtn.textContent = '▶ Enable Live Updates';
-                toggleLiveBtn.classList.remove('bg-red-600');
-                toggleLiveBtn.classList.add('bg-green-600');
-            }
-        });
+        // Load data on page load
+        setTimeout(() => {
+            triggerRakePipeline();
+        }, 500);
+    </script>
+</body>
+</html>
