@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RailSight Dashboard | Live Corridor Telemetry</title>
+    <title>RailSight Dashboard | Live Master Telemetry</title>
     <style>
         :root {
             --dark-bg: #0b0f19;
@@ -89,7 +89,7 @@
             display: inline-block;
         }
         
-        .metrics-row { display: flex; justify-content: space-between; background: #0b0f19; padding: 8px; border-radius: 6px; margin: 10px 0; }
+        .metrics-row { display: flex; justify-content: space-between; background: #0b0f19; padding: 8px; border-radius: 6px; margin: 12px 0; }
         .metric-cell span { display: block; font-size: 0.7rem; color: var(--text-slate); }
         .metric-cell strong { font-size: 0.95rem; }
         
@@ -137,8 +137,8 @@
 
     <main class="content-viewport">
         <div class="telemetry-bar">
-            <span>Corridor Profile: Mangaluru Central (MAJN) to Kozhikode Main (CLT)</span>
-            <span>24-Hour Master Master Grid Dashboard Connected</span>
+            <span>Corridor Path: Mangaluru Central (MAJN/MAQ) → Kozhikode Main (CLT)</span>
+            <span>24-Hour Master Unified Grid Active</span>
         </div>
 
         <div class="timeline-cards-container">
@@ -185,7 +185,7 @@
                     <span class="train-id-badge">#16649</span>
                 </div>
                 <div class="metrics-row">
-                    <div class="metric-cell"><span>Class Required</span>...<strong>Mail/Express</strong></div>
+                    <div class="metric-cell"><span>Class Required</span><strong>Mail/Express</strong></div>
                     <div class="metric-cell"><span>Actual Departure</span><strong>05:05</strong> <span style="color:var(--clr-green); font-size:0.7rem;">(On Time)</span></div>
                 </div>
                 <p class="fare-text">UTS Counter Fare: <span>₹143.65</span></p>
