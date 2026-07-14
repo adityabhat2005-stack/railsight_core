@@ -1,5 +1,5 @@
 # TARGET LOCATION: /main.py
-# Purpose: Master 24-Hour 10-Train Live Data Sync Engine (Including MEMUs & Passengers)
+# Purpose: Master 24-Hour 10-Train Live Data Sync Engine (Fixed Leading Zeros Error)
 
 import os
 import datetime
@@ -8,7 +8,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 import traceback
 
-app = FastAPI(title="RailSight Master 24HR Corridor Engine", version="8.0.0")
+app = FastAPI(title="RailSight Master 24HR Corridor Engine", version="8.1.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -27,10 +27,10 @@ async def get_live_corridor():
         h, m = ist_now.hour, ist_now.minute
         day_of_week = ist_now.weekday()
         
-        # ML Feature: Flags high volume commuter crowd windows natively
-        is_weekend_peak = day_of_week in [4, 5, 6]  # Fri, Sat, Sun
+        # Flags high volume commuter crowd windows natively (Friday, Saturday, Sunday)
+        is_weekend_peak = day_of_week in [4, 5, 6]
 
-        # NATIVE MASTER RAILWAY TRANSIT CORRIDOR ARRAY
+        # NATIVE MASTER RAILWAY TRANSIT CORRIDOR ARRAY (Fixed Train Numbers)
         real_railway_dataset = [
             {
                 "train_no": 12836,
@@ -57,7 +57,7 @@ async def get_live_corridor():
                 "nodes": [{"name": "MAQ (05:30)", "state": "passed"}, {"name": "KGQ (06:20)", "state": "passed"}, {"name": "CAN (07:45)", "state": "passed"}, {"name": "CLT (09:12)", "state": "current-location"}]
             },
             {
-                "train_no": 06486,
+                "train_no": 6486, # FIXED: Removed leading zero syntax error
                 "train_name": "Mangaluru - Kozhikode MEMU Special",
                 "sched": "06:45", "actual": "06:45", "delay": 0, "fare": 110.00, "category": "MEMU Service",
                 "location": "Terminated", "status_message": "MEMU Rake Dispatched - Arrived on Time",
@@ -114,20 +114,19 @@ async def get_live_corridor():
             }
         ]
 
-        # DYNAMIC STATUS TIME FILTER MECHANISM
-        # Modifies train parameters programmatically if the host clock moves past their operational block
+        # Dynamic Status Matrix Tracker logic based on current wall clock shifts
         total_sys_mins = (h * 60) + m
         for t in real_railway_dataset:
             act_hr, act_min = map(int, t["actual"].split(':'))
             total_train_mins = (act_hr * 60) + act_min
             
-            # If the current actual wall time is BEFORE the train's run, update status text to "Awaiting Start"
             if total_sys_mins < total_train_mins:
                 t["location"] = "Origin Terminal"
                 t["status_message"] = f"Awaiting dispatch. Expected departure at {t['actual']}."
                 for node in t["nodes"]:
                     node["state"] = "upcoming"
-                t["nodes"][0]["state"] = "current-location"
+                if t["nodes"]:
+                    t["nodes"][0]["state"] = "current-location"
 
         return {"meta": {"sync_time": ist_now.strftime("%H:%M:%S")}, "trains": real_railway_dataset}
 
