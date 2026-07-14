@@ -1,5 +1,5 @@
 # TARGET LOCATION: /ml_engine.py
--- Purpose: Synthetic Commuter Dataset Generator & Model Serialization Script
+# Purpose: Synthetic Commuter Dataset Generator & Model Serialization Script
 
 import os
 import pandas as pd
