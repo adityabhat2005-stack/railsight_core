@@ -41,6 +41,8 @@ def fetch_db_pool_connection():
     except Exception as err:
         raise HTTPException(status_code=500, detail=f"Neon database gateway offline: {str(err)}")
 
+# TARGET LOCATION: /main.py -> Replace the /api/transit-window endpoint block
+
 @app.get("/api/transit-window")
 async def get_transit_window(time_now: str = Query(None, description="ISO HH:MM:SS format constraint")):
     if not time_now:
@@ -49,6 +51,9 @@ async def get_transit_window(time_now: str = Query(None, description="ISO HH:MM:
         current_date = now_dt.date()
     else:
         try:
+            # Safely handle shorter time strings like '14:00' coming from the HTML frontend
+            if len(time_now.split(':')) == 2:
+                time_now = f"{time_now}:00"
             parsed_t = datetime.time.fromisoformat(time_now)
             time_str = parsed_t.strftime("%H:%M:%S")
             current_date = datetime.date.today()
@@ -56,13 +61,13 @@ async def get_transit_window(time_now: str = Query(None, description="ISO HH:MM:
             raise HTTPException(status_code=400, detail="Invalid time payload. Use exact HH:MM:SS format.")
 
     day_of_week = current_date.weekday()
-    is_holiday = 1 if day_of_week == 6 else 0 # Sunday validation mock flag logic
+    is_holiday = 1 if day_of_week == 6 else 0  # Sunday validation flag logic
     
     conn = fetch_db_pool_connection()
     cursor = conn.cursor()
     
     # Real-time UTS-style rolling 3-hour constraint
-    # Automatically filters out completely restricted premium services server-side
+    # Automatically filters out restricted premium services server-side
     query = """
         SELECT 
             s.schedule_id, s.train_no, m.train_name, c.category_name, 
@@ -83,17 +88,29 @@ async def get_transit_window(time_now: str = Query(None, description="ISO HH:MM:
     except Exception as query_err:
         cursor.close()
         conn.close()
-        raise HTTPException(status_code=500, detail=f"Database compilation crash: {str(query_err)}")
+        raise HTTPException(status_code=500, detail=f"Database query processing crash: {str(query_err)}")
         
     compiled_results = []
     
     for row in active_records:
+        # Psycopg3 wraps dictionary results cleanly. Let's isolate properties safely.
         act_dep_obj = row['actual_departure']
-        h, m = act_dep_obj.hour, act_dep_obj.minute
         
+        # Handle cases where Postgres returns time objects or raw strings
+        if isinstance(act_dep_obj, str):
+            # Parse string time format if necessary
+            h, m, _ = map(int, act_dep_obj.split(':'))
+            act_str = f"{h:02d}:{m:02d}"
+        else:
+            h, m = act_dep_obj.hour, act_dep_obj.minute
+            act_str = act_dep_obj.strftime("%H:%M")
+            
+        sched_dep_obj = row['scheduled_departure']
+        sched_str = sched_dep_obj if isinstance(sched_dep_obj, str) else sched_dep_obj.strftime("%H:%M")
+
         # Feed parameters directly into loaded Random Forest model
         features = np.array([[h, m, day_of_week, is_holiday]])
-        pred_id = int(loaded_classifier.predict(features)[0])
+        pred_id = int(loaded_classifier.predict(features))
         crowd_mapping = {0: "Low Density Available", 1: "Medium Commuter Volume", 2: "Heavy Rush"}
         
         # Automated Fare Mapping Script Calculation Engine
@@ -123,9 +140,9 @@ async def get_transit_window(time_now: str = Query(None, description="ISO HH:MM:
             "category": category,
             "is_specialty": row['is_specialty_unreserved'],
             "distance": float(row['distance_km']),
-            "scheduled": row['scheduled_departure'].strftime("%H:%M"),
+            "scheduled": sched_str,
             "delay": row['delay_minutes'],
-            "actual": act_dep_obj.strftime("%H:%M"),
+            "actual": act_str,
             "fare": round(calculated_fare, 2),
             "crowd_level": crowd_mapping[pred_id],
             "crowd_id": pred_id,
