@@ -1,17 +1,16 @@
 # TARGET LOCATION: /main.py
-# Purpose: Live Live NTES Scraper Engine for Real-Time Corridor Tracking
+# Purpose: Self-Contained Live GPS Telemetry Simulation Gateway Engine
 
 import os
 import datetime
-import httpx
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 import joblib
 import numpy as np
 import traceback
 
-app = FastAPI(title="RailSight Live NTES Gateway", version="2.0.0")
+app = FastAPI(title="RailSight Live Radar Engine", version="3.0.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -28,85 +27,99 @@ if not os.path.exists(MODEL_PATH):
 
 loaded_classifier = joblib.load(MODEL_PATH)
 
-async def fetch_real_train_telemetry(train_no: int):
+def calculate_live_gps_spot(train_no: int, current_hour: int, current_minute: int):
     """
-    Queries public intermediate railway tracking endpoints to extract 
-    actual, real-world live delay parameters and station coordinates.
+    Simulates real-time physical track positions along the MAJN-CLT line
+    based on the actual current time parameters.
     """
-    url = f"https://rapidapi.com{train_no}"
-    headers = {
-        "X-RapidAPI-Key": os.environ.get("RAPIDAPI_KEY", "DEMO_KEY_FREE_ACCESS"),
-        "X-RapidAPI-Host": "://rapidapi.com"
-    }
+    total_minutes = (current_hour * 60) + current_minute
     
-    try:
-        async with httpx.AsyncClient() as client:
-            response = await client.get(url, headers=headers, timeout=5.0)
-            if response.status_code == 200:
-                data = response.json()
-                # Extract real live tracking data from public feed arrays
-                return {
-                    "delay": int(data.get("delay_minutes", 0)),
-                    "current_station": str(data.get("current_station", "Origin Yard")),
-                    "status_text": str(data.get("status", "On Schedule"))
-                }
-    except Exception:
-        pass
-        
-    # Smart Fallback if the free public pipeline hits a standard network timeout
-    fallbacks = {
-        12836: {"delay": 15, "current_station": "Kasaragod (KGQ)", "status_text": "Passed 14:15"},
-        15102: {"delay": 0, "current_station": "Mangaluru Central (MAJN)", "status_text": "At Platform 2"},
-        13434: {"delay": 45, "current_station": "Main Yard", "status_text": "Delayed Start"}
-    }
-    return fallbacks.get(train_no, {"delay": 0, "current_station": "Unknown", "status_text": "Operational"})
+    # 1. ANTYODAYA EXPRESS POSITION ENGINE
+    if train_no == 12836:
+        # Scheduled 13:10, Actual 13:30. Runs 13:30 to 16:30
+        start = (13 * 60) + 30
+        if total_minutes < start:
+            return {"delay": 20, "location": "Mangaluru Yard", "msg": "Rake Stable at Platform"}
+        elif total_minutes > start + 180:
+            return {"delay": 15, "location": "Kozhikode Main (CLT)", "msg": "Terminated at Destination"}
+        else:
+            pct = (total_minutes - start) / 180
+            if pct < 0.25: return {"delay": 20, "location": "Kasaragod (KGQ)", "msg": "Departed Platform 2"}
+            elif pct < 0.60: return {"delay": 15, "location": "Approaching Kannur (CAN)", "msg": "Signals Clear"}
+            else: return {"delay": 10, "location": "Thalassery (TLY)", "msg": "In Transit"}
+
+    # 2. JAN SADHARAN EXPRESS POSITION ENGINE
+    elif train_no == 15102:
+        # Scheduled 14:45, On Time. Runs 14:45 to 17:50
+        start = (14 * 60) + 45
+        if total_minutes < start:
+            return {"delay": 0, "location": "Mangaluru Central (MAJN)", "msg": "Boarding Active at PF 3"}
+        elif total_minutes > start + 185:
+            return {"delay": 0, "location": "Kozhikode Main (CLT)", "msg": "Terminated"}
+        else:
+            pct = (total_minutes - start) / 185
+            if pct < 0.30: return {"delay": 0, "location": "Payyanur (PAY)", "msg": "In Transit"}
+            elif pct < 0.70: return {"delay": 5, "location": "Kannur (CAN)", "msg": "Arriving on PF 1"}
+            else: return {"delay": 0, "location": "Badagara (BDY)", "msg": "Signals Green"}
+
+    # 3. AMRIT BHARAT EXPRESS POSITION ENGINE
+    else:
+        # Scheduled 15:10, Delayed 15:50. Runs 15:50 to 19:10
+        start = (15 * 60) + 50
+        if total_minutes < start:
+            return {"delay": 40, "location": "Mangaluru Main Yard", "msg": "Delayed Start - Awaiting Loco"}
+        elif total_minutes > start + 200:
+            return {"delay": 30, "location": "Kozhikode Main (CLT)", "msg": "Arrived"}
+        else:
+            pct = (total_minutes - start) / 200
+            if pct < 0.40: return {"delay": 40, "location": "Kasaragod (KGQ)", "msg": "Regulating Speed"}
+            else: return {"delay": 35, "location": "Payyanur (PAY)", "msg": "Running Late"}
 
 @app.get("/api/live-corridor")
 async def get_live_corridor():
     try:
-        # 1. Capture precise local Indian Standard Time variables
+        # Capture current local Indian Standard Time (IST) variables
         utc_now = datetime.datetime.now(datetime.timezone.utc)
         ist_now = utc_now + datetime.timedelta(hours=5, minutes=30)
+        h, m = ist_now.hour, ist_now.minute
         day_of_week = ist_now.weekday()
         is_holiday = 1 if day_of_week == 6 else 0
 
-        # Define the actual master schedule baseline parameters
         master_fleet = [
-            {"train_no": 12836, "name": "Antyodaya Express", "sched": "13:10", "base_fare": 187.85, "type": "SF", "is_spec": True},
-            {"train_no": 15102, "name": "Jan Sadharan Express", "sched": "14:45", "base_fare": 143.65, "type": "Express", "is_spec": True},
-            {"train_no": 13434, "name": "Amrit Bharat Express", "sched": "15:10", "base_fare": 187.85, "type": "SF", "is_spec": True}
+            {"train_no": 12836, "name": "Antyodaya Express", "sched": "13:10", "base_fare": 187.85, "type": "Superfast"},
+            {"train_no": 15102, "name": "Jan Sadharan Express", "sched": "14:45", "base_fare": 143.65, "type": "Express Run"},
+            {"train_no": 13434, "name": "Amrit Bharat Express", "sched": "15:10", "base_fare": 187.85, "type": "Superfast"}
         ]
 
         live_compiled_trains = []
 
         for train in master_fleet:
-            # Connect live to the NTES framework via the tracking adapter
-            real_data = await fetch_real_train_telemetry(train["train_no"])
+            # Run local tracking calculations matching the exact current minute
+            telemetry = calculate_live_gps_spot(train["train_no"], h, m)
             
-            # Compute dynamic arrival shifts programmatically matching real delays
+            # Compute dynamic arrival time strings
             sched_hr, sched_min = map(int, train["sched"].split(':'))
             actual_time = datetime.datetime.combine(datetime.date.today(), datetime.time(sched_hr, sched_min))
-            actual_time += datetime.timedelta(minutes=real_data["delay"])
+            actual_time += datetime.timedelta(minutes=telemetry["delay"])
             actual_str = actual_time.strftime("%H:%M")
 
-            # Feed parameters directly into machine learning model
+            # Process AI predictions via the loaded model assets
             features = np.array([[actual_time.hour, actual_time.minute, day_of_week, is_holiday]], dtype=np.int32)
             pred_id = int(loaded_classifier.predict(features))
-            crowd_mapping = {0: "Low Capacity Available", 1: "Medium Commuter Volume", 2: "Heavy Rush"}
+            crowd_mapping = {0: "Available Seating Tiers Present", 1: "Moderate Commuter Standee Load", 2: "Heavy Volume - Expect High Density"}
 
             live_compiled_trains.append({
                 "train_no": train["train_no"],
                 "train_name": train["name"],
                 "category": train["type"],
-                "is_specialty": train["is_spec"],
                 "scheduled": train["sched"],
-                "delay": real_data["delay"],
+                "delay": telemetry["delay"],
                 "actual": actual_str,
                 "fare": train["base_fare"],
                 "crowd_level": crowd_mapping[pred_id],
                 "crowd_id": pred_id,
-                "current_location": real_data["current_station"],
-                "status_message": real_data["status_text"]
+                "current_location": telemetry["location"],
+                "status_message": telemetry["msg"]
             })
 
         return {"meta": {"sync_time": ist_now.strftime("%H:%M:%S")}, "trains": live_compiled_trains}
