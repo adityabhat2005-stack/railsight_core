@@ -55,7 +55,7 @@ async def get_transit_window(time_now: str = Query(None, description="ISO HH:MM:
             raise HTTPException(status_code=400, detail="Invalid time payload. Use exact HH:MM:SS format.")
 
     day_of_week = current_date.weekday()
-    is_holiday = 1 if day_of_week == 6 else 0 -- Sunday validation mock flag logic
+    is_holiday = 1 if day_of_week == 6 else 0 # Sunday validation mock flag logic
     
     conn = fetch_db_pool_connection()
     cursor = conn.cursor()
