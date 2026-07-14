@@ -1,5 +1,5 @@
 # TARGET LOCATION: /main.py
-# Purpose: Final Stable Asynchronous API Gateway running on Psycopg3
+# Purpose: Final Production Stable Gateway Handling Native Time Objects
 
 import os
 import datetime
@@ -13,12 +13,11 @@ import numpy as np
 import traceback
 
 app = FastAPI(
-    title="RailSight Ultimate Gateway",
-    description="Production Router Core matching Python 3.14.3 constraints",
-    version="1.2.0"
+    title="RailSight Final Master Gateway",
+    description="Production Router Core with explicit Native Parameter Handoff",
+    version="1.3.0"
 )
 
-# Cross-Origin Isolation configuration for frontend mounting maps
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -38,35 +37,42 @@ loaded_classifier = joblib.load(MODEL_PATH)
 
 def fetch_db_pool_connection():
     if not DATABASE_URL:
-        raise ValueError("CRITICAL INITIALIZATION CRASH: The DATABASE_URL secret parameter is empty on Render settings.")
+        raise ValueError("CRITICAL DATABASE INSTANTIATION ERROR: DATABASE_URL variable is missing in Render environment.")
     cleaned_url = DATABASE_URL
     if "sslmode" not in cleaned_url:
         cleaned_url += "&sslmode=require" if "?" in cleaned_url else "?sslmode=require"
     return psycopg.connect(cleaned_url, row_factory=dict_row)
 
 @app.get("/api/transit-window")
-async def get_transit_window(time_now: str = Query(None, description="ISO input window index profile")):
+async def get_transit_window(time_now: str = Query(None, description="Input time filter format")):
     try:
         if not time_now:
             utc_now = datetime.datetime.now(datetime.timezone.utc)
             ist_offset = datetime.timedelta(hours=5, minutes=30)
             ist_now = utc_now + ist_offset
+            parsed_time_obj = ist_now.time()
             time_str = ist_now.strftime("%H:%M:%S")
-            current_date = ist_now.date()
         else:
             if len(time_now.split(':')) == 2:
                 time_now = f"{time_now}:00"
-            parsed_t = datetime.time.fromisoformat(time_now)
-            time_str = parsed_t.strftime("%H:%M:%S")
-            current_date = datetime.date.today()
+            # Explicitly parse input text into a proper Python native datetime object!
+            # This completely stops database text parsing and quote formatting bugs.
+            parsed_time_obj = datetime.time.fromisoformat(time_now)
+            time_str = time_now
 
-        day_of_week = current_date.weekday()
+        # Dynamically compute the exact upper bound constraint (3 Hours Later)
+        dummy_date = datetime.date.today()
+        combined_dt = datetime.datetime.combine(dummy_date, parsed_time_obj)
+        upper_bound_dt = combined_dt + datetime.timedelta(hours=3)
+        upper_bound_time_obj = upper_bound_dt.time()
+
+        day_of_week = datetime.date.today().weekday()
         is_holiday = 1 if day_of_week == 6 else 0
 
         conn = fetch_db_pool_connection()
         cursor = conn.cursor()
 
-        # Clean positional parameters matching psycopg v3 spec layout
+        # UPDATED RESILIENT SQL ENGINE QUERY: Uses completely clean native time object parameter pass-offs
         query = """
             SELECT 
                 s.schedule_id, s.train_no, m.train_name, c.category_name, 
@@ -76,12 +82,13 @@ async def get_transit_window(time_now: str = Query(None, description="ISO input 
             JOIN Train_Master m ON s.train_no = m.train_no
             JOIN Train_Category c ON m.category_id = c.category_id
             WHERE c.is_premium = FALSE
-              AND s.actual_departure >= %s::TIME
-              AND s.actual_departure <= (%s::TIME + INTERVAL '3 hours')::TIME
+              AND s.actual_departure >= %s
+              AND s.actual_departure <= %s
             ORDER BY s.actual_departure ASC;
         """
 
-        cursor.execute(query, [time_str, time_str])
+        # Hand off the explicit native objects directly instead of format strings
+        cursor.execute(query, [parsed_time_obj, upper_bound_time_obj])
         active_records = cursor.fetchall()
         
         compiled_results = []
@@ -99,7 +106,7 @@ async def get_transit_window(time_now: str = Query(None, description="ISO input 
             sched_dep_val = row['scheduled_departure']
             sched_str = sched_dep_val.strftime("%H:%M") if hasattr(sched_dep_val, 'hour') else str(sched_dep_val)[:5]
 
-            # Trigger lightweight AI predictive classification row array mappings
+            # Process AI predictions via loaded pipeline classifier model assets
             features = np.array([[h, m, day_of_week, is_holiday]], dtype=np.int32)
             pred_id = int(loaded_classifier.predict(features))
             crowd_mapping = {0: "Low Density Available", 1: "Medium Commuter Volume", 2: "Heavy Rush - Expect Crowding"}
@@ -107,7 +114,6 @@ async def get_transit_window(time_now: str = Query(None, description="ISO input 
             calculated_fare = float(row['distance_km']) * float(row['base_fare_per_km'])
             category = str(row['category_name'])
             
-            # Robust type-agnostic mapping logic check for boolean or string-based Postgres indicators
             is_specialty_flag = str(row['is_specialty_unreserved']).lower() in ['true', '1', 't', 'yes']
 
             if is_specialty_flag:
@@ -157,5 +163,4 @@ async def get_transit_window(time_now: str = Query(None, description="ISO input 
             }
         }
 
-# Mount static frontend components cleanly below API logic layout
 app.mount("/", StaticFiles(directory="static", html=True), name="static")
