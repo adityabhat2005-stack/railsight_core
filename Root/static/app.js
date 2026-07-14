@@ -1,24 +1,21 @@
 // TARGET LOCATION: /static/app.js
-// Purpose: Explicit Parameter-Checking Layout Controller Matrix
-
 document.addEventListener("DOMContentLoaded", () => {
     const trigger = document.getElementById("query-trigger");
     const timeVector = document.getElementById("time-vector");
     const mountPoint = document.getElementById("cards-mount-point");
 
     async function pullTransitTelemetryStream() {
-        const rawTimeVal = timeVector.value; // Extracts text like "15:00" or "07:30"
+        const rawTimeVal = timeVector.value; // Now extracts a complete string like "14:00:00"
         
-        // Fail-safe formatting validation: Ensure the string has seconds attached
         let formattedTimeParam = rawTimeVal;
+        // Fallback protection rule: if the value drops the seconds component, re-append them
         if (rawTimeVal && rawTimeVal.split(':').length === 2) {
-            formattedTimeParam = `${rawTimeVal}:00`; // Converts "15:00" to "15:00:00"
+            formattedTimeParam = `${rawTimeVal}:00`;
         }
 
         mountPoint.innerHTML = `<p style="grid-column:1/-1; text-align:center; color:var(--text-slate);">Querying 3-hour timetable frame for parameter: ${formattedTimeParam}...</p>`;
         
         try {
-            // Fetch directly from the endpoint with the updated time parameter string
             const endpoint = `/api/transit-window?time_now=${formattedTimeParam}`;
             const res = await fetch(endpoint);
             if (!res.ok) throw new Error(`Server returned code verification error: ${res.status}`);
@@ -37,7 +34,7 @@ document.addEventListener("DOMContentLoaded", () => {
             mountPoint.innerHTML = `
                 <div style="grid-column: 1/-1; text-align: center; padding: 30px; background: rgba(255,255,255,0.02); border-radius: 8px; border: 1px dashed var(--text-slate);">
                     <p style="color: var(--text-slate); font-size: 1.1rem;">No upcoming unreserved trains found running inside this 3-hour timetable window.</p>
-                    <p style="color: var(--sky-accent); font-size: 0.85rem; margin-top: 5px;">Try checking <strong>06:00</strong>, <strong>14:00</strong>, or <strong>15:00</strong> to match your database seed data parameters.</p>
+                    <p style="color: var(--sky-accent); font-size: 0.85rem; margin-top: 5px;">Try checking <strong>14:00:00</strong> or <strong>15:00:00</strong> to match your database values.</p>
                 </div>`;
             return;
         }
@@ -47,7 +44,6 @@ document.addEventListener("DOMContentLoaded", () => {
             card.className = "card";
             
             const actualTimeStr = t.actual || "00:00";
-            const scheduledTimeStr = t.scheduled || "00:00";
             const fareCost = t.fare || 0.00;
             const alertColor = t.color_state || "GRAY";
 
@@ -85,6 +81,5 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     trigger.addEventListener("click", pullTransitTelemetryStream);
-    // Initialize default lookup window on initial page initialization
     pullTransitTelemetryStream();
 });
