@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RailSight Dashboard | Live Track & Telemetry</title>
+    <title>RailSight Dashboard | Live Dynamic Telemetry</title>
     <style>
         :root {
             --dark-bg: #0b0f19;
@@ -57,6 +57,22 @@
             border-left: 4px solid var(--sky-accent);
         }
         
+        /* Blinking Active Animation Trackers */
+        .live-pulse {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background-color: var(--clr-green);
+            border-radius: 50%;
+            margin-right: 5px;
+            animation: pulse-glow 1.5s infinite;
+        }
+        @keyframes pulse-glow {
+            0% { transform: scale(0.9); opacity: 1; box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { transform: scale(1); opacity: 0.5; box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+            100% { transform: scale(0.9); opacity: 1; box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+
         .timeline-cards-container {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
@@ -102,7 +118,7 @@
         .dot-amber { background: var(--clr-amber); }
         .dot-red { background: var(--clr-red); }
 
-        /* Mobile-Optimized High-Contrast Vertical Tracker */
+        /* Dynamic Tracker Components */
         .live-tracker-panel { background: #0b0f19; padding: 12px; border-radius: 6px; margin-bottom: 14px; border: 1px solid #1e293b; }
         .tracker-header { display: flex; justify-content: space-between; font-size: 0.78rem; color: var(--text-slate); margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid #1e293b; }
         
@@ -112,16 +128,20 @@
         .track-node { position: relative; font-size: 0.8rem; color: var(--text-slate); margin-bottom: 8px; padding-left: 5px; }
         .track-node::before { content: ''; position: absolute; left: -19px; top: 4px; width: 8px; height: 8px; background: #475569; border-radius: 50%; }
         
-        .track-node.passed { color: #e2e8f0; }
+        .track-node.passed { color: var(--text-slate); opacity: 0.6; }
         .track-node.passed::before { background: var(--sky-accent); }
         
-        .track-node.current-location { color: var(--clr-red); font-weight: bold; }
+        .track-node.current-location { color: var(--clr-red); font-weight: bold; animation: alert-flash 1s linear infinite alternate; }
         .track-node.current-location::before { background: var(--clr-red); box-shadow: 0 0 8px var(--clr-red); width: 10px; height: 10px; left: -20px; top: 3px; }
+        @keyframes alert-flash { 0% { opacity: 1; } 100% { opacity: 0.7; } }
 
         .advisory { padding: 10px; border-radius: 4px; font-size: 0.78rem; font-weight: bold; line-height: 1.3; }
         .alert-GREEN { background: rgba(16,185,129,0.15); border: 1px solid var(--clr-green); color: #34d399; }
         .alert-ORANGE { background: rgba(234, 88, 12, 0.15); border: 1px solid var(--clr-orange); color: #fb923c; }
         .alert-RED { background: rgba(239, 68, 68, 0.15); border: 1px solid var(--clr-red); color: #f87171; }
+        
+        /* Live Countdown Widget Style */
+        .countdown-stream { font-family: monospace; color: var(--sky-accent); font-weight: bold; }
     </style>
 </head>
 <body>
@@ -131,14 +151,14 @@
             <p>Independent Operational Intelligence & Live Status Corridor Tracker</p>
         </div>
         <div class="time-control-deck">
-            <span id="live-clock-badge">Initializing System Sync...</span>
+            <span id="live-clock-badge">Syncing Server...</span>
         </div>
     </header>
 
     <main class="content-viewport">
         <div class="telemetry-bar">
             <span>Corridor Path: Mangaluru Central (MAJN) → Kozhikode Main (CLT)</span>
-            <span style="color:var(--sky-accent); font-weight:bold;">🛰️ GPS LIVE POSITION LINK ACTIVE</span>
+            <span style="color:var(--sky-accent); font-weight:bold;"><span class="live-pulse"></span>GPS TELEMETRY ACTIVE</span>
         </div>
 
         <div class="timeline-cards-container">
@@ -154,17 +174,16 @@
                 </div>
                 <div class="metrics-row">
                     <div class="metric-cell"><span>Required UTS Ticket Class</span><strong style="color:var(--sky-accent);">II ANTYODAYA (SF Unreserved)</strong></div>
-                    <div class="metric-cell"><span>Actual Departure</span><strong>13:30</strong> <span style="color:var(--clr-red); font-size:0.7rem;">(+20m Delay)</span></div>
+                    <div class="metric-cell"><span>Dynamic T-Minus Tracker</span><span class="countdown-stream" id="cd-antyodaya">Calculating...</span></div>
                 </div>
                 <p class="fare-text">Dedicated Counter Fare: <span>₹187.85</span></p>
                 
-                <!-- AI Crowd Tracker Module -->
                 <div class="crowd-indicator">
                     <div class="dot dot-green"></div>
                     <span>AI Crowd Forecast: <strong>Available Seating Tiers Present</strong></span>
                 </div>
 
-                <!-- LIVE TRACK MY TRAIN PANEL -->
+                <!-- LIVE STATUS TRACKER PANEL -->
                 <div class="live-tracker-panel">
                     <div class="tracker-header">
                         <span>Status: <strong style="color:var(--clr-green);">In Transit</strong></span>
@@ -179,24 +198,9 @@
                 </div>
 
                 <div class="advisory alert-GREEN">
-                    FINE PROTECTION SECURED: Fully unreserved layout. Board safely ONLY with a specific "II ANTYODAYA" counter ticket. Standard general tickets will face TTE penalties.
+                    FINE PROTECTION SECURED: Fully unreserved coach layout. Board safely ONLY with a specific "II ANTYODAYA" counter ticket. Standard general tickets will face TTE penalties.
                 </div>
             </div>
 
             <!-- 2. JAN SADHARAN EXPRESS CARD -->
             <div class="card">
-                <div class="card-top">
-                    <div>
-                        <h3>Jan Sadharan Express</h3>
-                        <div><span class="specialty-tag">FULLY UNRESERVED EXPRESS</span></div>
-                    </div>
-                    <span class="train-id-badge">#15102</span>
-                </div>
-                <div class="metrics-row">
-                    <div class="metric-cell"><span>Required UTS Ticket Class</span><strong>General Second Class (2S)</strong></div>
-                    <div class="metric-cell"><span>Actual Departure</span><strong>14:45</strong> <span style="color:var(--clr-green); font-size:0.7rem;">(On Time)</span></div>
-                </div>
-                <p class="fare-text">Standard General Fare: <span>₹143.65</span></p>
-                
-                <!-- AI Crowd Tracker Module -->
-                <div class="crowd-indicator">
