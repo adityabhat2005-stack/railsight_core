@@ -75,6 +75,9 @@ def calculate_live_gps_spot(train_no: int, current_hour: int, current_minute: in
             if pct < 0.40: return {"delay": 40, "location": "Kasaragod (KGQ)", "msg": "Regulating Speed"}
             else: return {"delay": 35, "location": "Payyanur (PAY)", "msg": "Running Late"}
 
+# TARGET LOCATION: /main.py -> Replace the /api/live-corridor function block
+import pandas as pd # Make sure this import is added to the top of your file!
+
 @app.get("/api/live-corridor")
 async def get_live_corridor():
     try:
@@ -103,9 +106,16 @@ async def get_live_corridor():
             actual_time += datetime.timedelta(minutes=telemetry["delay"])
             actual_str = actual_time.strftime("%H:%M")
 
-            # Process AI predictions via the loaded model assets
-            features = np.array([[actual_time.hour, actual_time.minute, day_of_week, is_holiday]], dtype=np.int32)
-            pred_id = int(loaded_classifier.predict(features))
+            # FIX: Format parameters into a proper Pandas DataFrame with matching structural text headers
+            # This completely stops the scikit-learn validation warnings in your deployment log stream
+            features_df = pd.DataFrame([{
+                'departure_hour': int(actual_time.hour),
+                'departure_minute': int(actual_time.minute),
+                'day_of_the_week': int(day_of_week),
+                'is_holiday': int(is_holiday)
+            }])
+            
+            pred_id = int(loaded_classifier.predict(features_df)[0])
             crowd_mapping = {0: "Available Seating Tiers Present", 1: "Moderate Commuter Standee Load", 2: "Heavy Volume - Expect High Density"}
 
             live_compiled_trains.append({
@@ -126,5 +136,6 @@ async def get_live_corridor():
 
     except Exception as raw_error:
         return {"error": str(raw_error), "trace": traceback.format_exc()}
+
 
 app.mount("/", StaticFiles(directory="static", html=True), name="static")
