@@ -1,0 +1,12 @@
+# TARGET LOCATION: /render.yaml
+# Purpose: Infrastructure-as-Code Setup for Automated Build Sequences
+
+services:
+  - type: web
+    name: railsight-corridor-service
+    env: python
+    buildCommand: pip install -r requirements.txt && python ml_engine.py
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: DATABASE_URL
+        sync: false # Set securely in the Render GUI dashboard configuration panel
