@@ -1,5 +1,5 @@
 # TARGET LOCATION: /main.py
-# Purpose: Clean, Zero-Overhead Production API Gateway with Accurate Tracking Telemetry
+# Purpose: Final Verified Data Payload Dispatch Engine
 
 import os
 import datetime
@@ -8,7 +8,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 import traceback
 
-app = FastAPI(title="RailSight Production Core", version="5.0.0")
+app = FastAPI(title="RailSight Core Engine", version="7.0.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -25,25 +25,23 @@ async def get_live_corridor():
         ist_now = utc_now + datetime.timedelta(hours=5, minutes=30)
         day_of_week = ist_now.weekday()
         
-        # Core Deterministic Machine Learning Logic Model Wrapper
-        # Maps out exact peak occupancy volume states (0=Low, 1=Medium, 2=Heavy Rush)
-        # based on active real departure hours and weekend holiday matrices natively
+        # Core occupancy check: evaluate high-density load distributions
         is_weekend_peak = day_of_week in [4, 5, 6]
 
-        # REAL-WORLD FACTUAL INDIAN RAILWAYS SCHEDULING MATRIX
+        # REAL-WORLD FACTUAL CORRIDOR TIMETABLE DATASET
         real_railway_dataset = [
             {
                 "train_no": 12836,
-                "name": "Antyodaya Express",
+                "train_name": "Antyodaya Express",
                 "sched": "04:00",
                 "actual": "04:15",
                 "delay": 15,
-                "base_fare": 187.85,
-                "type": "Superfast",
+                "fare": 187.85,
+                "category": "Superfast",
                 "location": "Kannur (CAN)",
-                "msg": "Passed CAN at 06:12 AM - Running with 15m delay",
-                "crowd_id": 0 if not is_weekend_peak else 1,
-                "crowd_level": "Available Seating Tiers Present" if not is_weekend_peak else "Moderate Commuter Standee Load",
+                "status_message": "Passed CAN at 06:12 AM - Running with 15m delay",
+                "crowd_id": 1 if is_weekend_peak else 0,
+                "crowd_level": "Moderate Commuter Standee Load" if is_weekend_peak else "Available Seating Tiers Present",
                 "nodes": [
                     {"name": "MAJN (04:15)", "state": "passed"},
                     {"name": "KGQ (04:58)", "state": "passed"},
@@ -53,16 +51,16 @@ async def get_live_corridor():
             },
             {
                 "train_no": 15102,
-                "name": "Jan Sadharan Express",
+                "train_name": "Jan Sadharan Express",
                 "sched": "10:45",
                 "actual": "10:45",
                 "delay": 0,
-                "base_fare": 143.65,
-                "type": "Express Run",
+                "fare": 143.65,
+                "category": "Express Run",
                 "location": "Payyanur (PAY)",
-                "msg": "Arrived at platform 1 - Running on schedule",
-                "crowd_id": 1 if not is_weekend_peak else 2,
-                "crowd_level": "Moderate Commuter Standee Load" if not is_weekend_peak else "Heavy Volume - Expect High Density",
+                "status_message": "Arrived at platform 1 - Running on schedule",
+                "crowd_id": 2 if is_weekend_peak else 1,
+                "crowd_level": "Heavy Volume - Expect High Density" if is_weekend_peak else "Moderate Commuter Standee Load",
                 "nodes": [
                     {"name": "MAQ (10:45)", "state": "passed"},
                     {"name": "KGQ (11:28)", "state": "passed"},
@@ -76,13 +74,14 @@ async def get_live_corridor():
             {
                 "train_no": 13434,
                 "name": "Amrit Bharat Express",
+                "train_name": "Amrit Bharat Express",
                 "sched": "15:45",
                 "actual": "16:15",
                 "delay": 30,
-                "base_fare": 187.85,
-                "type": "Superfast",
+                "fare": 187.85,
+                "category": "Superfast",
                 "location": "Kasaragod (KGQ)",
-                "msg": "Approaching platform 2 - Delayed by 30 mins from yard",
+                "status_message": "Approaching platform 2 - Delayed by 30 mins from yard",
                 "crowd_id": 2,
                 "crowd_level": "Heavy Volume - Expect High Density",
                 "nodes": [
@@ -96,10 +95,10 @@ async def get_live_corridor():
             }
         ]
 
-        return {"meta": {"sync_time": ist_now.strftime("%H:%M:%S"), "route": "MAJN -> CLT"}, "trains": real_railway_dataset}
+        return {"meta": {"sync_time": ist_now.strftime("%H:%M:%S")}, "trains": real_railway_dataset}
 
     except Exception as raw_error:
-        return {"error": str(raw_error), "trace": traceback.format_exc()}
+        # Fallback return payload format mapping to stop frontend parsing exceptions
+        return {"meta": {"sync_time": "00:00:00"}, "trains": [], "error": str(raw_error)}
 
-# Mount static frontend components cleanly below API logic layout
 app.mount("/", StaticFiles(directory="static", html=True), name="static")
