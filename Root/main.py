@@ -60,8 +60,8 @@ async def get_transit_window(time_now: str = Query(None, description="ISO HH:MM:
     conn = fetch_db_pool_connection()
     cursor = conn.cursor()
     
-    -- Real-time UTS-style rolling 3-hour constraint
-    -- Automatically filters out completely restricted premium services server-side
+    # Real-time UTS-style rolling 3-hour constraint
+    # Automatically filters out completely restricted premium services server-side
     query = """
         SELECT 
             s.schedule_id, s.train_no, m.train_name, c.category_name, 
@@ -136,5 +136,5 @@ async def get_transit_window(time_now: str = Query(None, description="ISO HH:MM:
     conn.close()
     return {"meta": {"query_time": time_str, "route": "MAJN -> CLT"}, "trains": compiled_results}
 
--- Mount lightweight web UI directory natively to deliver fast page views
+# Mount lightweight web UI directory natively to deliver fast page views
 app.mount("/", StaticFiles(directory="static", html=True), name="static")
