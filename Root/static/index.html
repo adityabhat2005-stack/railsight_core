@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RailSight Dashboard | Live Telemetry</title>
+    <title>RailSight Dashboard | Live Corridor Telemetry</title>
     <style>
         :root {
             --dark-bg: #0b0f19;
@@ -93,8 +93,8 @@
         .dot-red { background: var(--clr-red); }
         .advisory { padding: 10px; border-radius: 4px; font-size: 0.78rem; font-weight: bold; line-height: 1.3; }
         .alert-GREEN { background: rgba(16,185,129,0.15); border: 1px solid var(--clr-green); color: #34d399; }
-        .alert-AMBER { background: rgba(245,158,11,0.15); border: 1px solid var(--clr-amber); color: #fbbf24; }
-        .alert-RED { background: rgba(239,68,68,0.15); border: 1px solid var(--clr-red); color: #f87171; }
+        .alert-ORANGE { background: rgba(234, 88, 12, 0.15); border: 1px solid var(--clr-orange); color: #fb923c; }
+        .alert-RED { background: rgba(239, 68, 68, 0.15); border: 1px solid var(--clr-red); color: #f87171; }
     </style>
 </head>
 <body>
@@ -104,38 +104,38 @@
             <p>Independent Operational Intelligence for Unreserved Commuters</p>
         </div>
         <div class="time-control-deck">
-            <span id="live-clock-badge">Live System Sync Active</span>
+            <span id="live-clock-badge">Initializing System Sync...</span>
         </div>
     </header>
 
     <main class="content-viewport">
         <div class="telemetry-bar">
-            <span>Corridor Profile: Mangaluru Central (MAJN) to Kozhikode Main (CLT)</span>
-            <span>Real-Time Deployment Window Enabled</span>
+            <span>Corridor Path: Mangaluru Central (MAJN) → Kozhikode Main (CLT)</span>
+            <span style="color:var(--clr-amber); font-weight:bold;">🕒 3HR LIVE VIEW: Displaying Next Scheduled Corridor Fleets</span>
         </div>
 
         <div class="timeline-cards-container">
             
-            <!-- 1. ANTYODAYA EXPRESS CARD -->
+            <!-- 1. ANTYODAYA EXPRESS DEDICATED SPECIFICATION CARD -->
             <div class="card">
                 <div class="card-top">
                     <div>
                         <h3>Antyodaya Express</h3>
-                        <div><span class="specialty-tag">SPECIALTY UNRESERVED FLEET</span></div>
+                        <div><span class="specialty-tag" style="background:var(--sky-accent); color:#000;">II ANTYODAYA UNIQUE FARE RAKE</span></div>
                     </div>
                     <span class="train-id-badge">#12836</span>
                 </div>
                 <div class="metrics-row">
-                    <div class="metric-cell"><span>Class Classification</span><strong>Superfast</strong></div>
-                    <div class="metric-cell"><span>Actual Departure</span><strong>13:30</strong> <span style="color:var(--clr-red); font-size:0.7rem;">(+20m Delay)</span></div>
+                    <div class="metric-cell"><span>Required UTS Ticket Class</span><strong style="color:var(--sky-accent);">II ANTYODAYA (Unreserved SF)</strong></div>
+                    <div class="metric-cell"><span>Actual Departure Window</span><strong>Next Run: 13:30</strong> <span style="color:var(--clr-red); font-size:0.7rem;">(+20m Delay)</span></div>
                 </div>
-                <p class="fare-text">Unreserved Counter Fare: <span>₹187.85</span></p>
+                <p class="fare-text">Dedicated Counter Fare (15% Superfast Surcharge Added): <span>₹187.85</span></p>
                 <div class="crowd-indicator">
                     <div class="dot dot-green"></div>
                     <span>AI Crowd Forecast: <strong>Available Seating Tiers Present</strong></span>
                 </div>
                 <div class="advisory alert-GREEN">
-                    FINE PROTECTION SECURED: Fully Unreserved Train Configuration. Board cleanly with basic General class paper tickets.
+                    FINE PROTECTION SECURED: This fleet features cushioned berths mimicking a sleeper layout, but contains NO reserved sleeper coaches. You cannot board using standard General tickets. You must hold an explicit "II ANTYODAYA" counter ticket to avoid TTE penalization.
                 </div>
             </div>
 
@@ -144,21 +144,21 @@
                 <div class="card-top">
                     <div>
                         <h3>Jan Sadharan Express</h3>
-                        <div><span class="specialty-tag">SPECIALTY UNRESERVED FLEET</span></div>
+                        <div><span class="specialty-tag">FULLY UNRESERVED EXPRESS</span></div>
                     </div>
                     <span class="train-id-badge">#15102</span>
                 </div>
                 <div class="metrics-row">
-                    <div class="metric-cell"><span>Class Classification</span><strong>Express Run</strong></div>
-                    <div class="metric-cell"><span>Actual Departure</span><strong>14:45</strong> <span style="color:var(--clr-green); font-size:0.7rem;">(On Time)</span></div>
+                    <div class="metric-cell"><span>Required UTS Ticket Class</span><strong>General Second Class (2S)</strong></div>
+                    <div class="metric-cell"><span>Actual Departure Window</span><strong>Next Run: 14:45</strong> <span style="color:var(--clr-green); font-size:0.7rem;">(On Time)</span></div>
                 </div>
-                <p class="fare-text">Unreserved Counter Fare: <span>₹143.65</span></p>
+                <p class="fare-text">Standard Mail/Express General Fare: <span>₹143.65</span></p>
                 <div class="crowd-indicator">
                     <div class="dot dot-amber"></div>
                     <span>AI Crowd Forecast: <strong>Moderate Commuter Standee Load</strong></span>
                 </div>
                 <div class="advisory alert-GREEN">
-                    FINE PROTECTION SECURED: Fully Unreserved Train Configuration. Board cleanly with basic General class paper tickets.
+                    FINE PROTECTION SECURED: Fully Unreserved Train Layout. Board cleanly using basic, standard General Class tickets from the counter or UTS app.
                 </div>
             </div>
 
@@ -167,21 +167,21 @@
                 <div class="card-top">
                     <div>
                         <h3>Amrit Bharat Express</h3>
-                        <div><span class="specialty-tag">SPECIALTY UNRESERVED FLEET</span></div>
+                        <div><span class="specialty-tag">UNRESERVED / SL HYBRID RAKE</span></div>
                     </div>
                     <span class="train-id-badge">#13434</span>
                 </div>
                 <div class="metrics-row">
-                    <div class="metric-cell"><span>Class Classification</span><strong>Superfast</strong></div>
-                    <div class="metric-cell"><span>Actual Departure</span><strong>15:30</strong> <span style="color:var(--clr-red); font-size:0.7rem;">(+20m Delay)</span></div>
+                    <div class="metric-cell"><span>Required UTS Ticket Class</span><strong>Superfast General (2S)</strong></div>
+                    <div class="metric-cell"><span>Actual Departure Window</span><strong>Next Run: 15:30</strong> <span style="color:var(--clr-red); font-size:0.7rem;">(+20m Delay)</span></div>
                 </div>
-                <p class="fare-text">Unreserved Counter Fare: <span>₹187.85</span></p>
+                <p class="fare-text">Superfast General Counter Fare: <span>₹187.85</span></p>
                 <div class="crowd-indicator">
                     <div class="dot dot-red"></div>
                     <span>AI Crowd Forecast: <strong>Heavy Volume - Expect High Density</strong></span>
                 </div>
-                <div class="advisory alert-GREEN">
-                    FINE PROTECTION SECURED: Fully Unreserved Train Configuration. Board cleanly with basic General class paper tickets.
+                <div class="advisory alert-ORANGE">
+                    TTE PENALTY ALERT: Ensure your counter or UTS ticket explicitly includes the "Superfast Surcharge". Boarding with a basic Ordinary or Passenger ticket incurs an automatic structural penalty fee.
                 </div>
             </div>
 
@@ -189,10 +189,10 @@
     </main>
 
     <script>
-        // Inline script to keep a functional clock ticking on the layout navbar natively
+        // Ticking system clock script syncing automatically with local hardware time
         setInterval(() => {
             const now = new Date();
-            document.getElementById("live-clock-badge").innerHTML = "Live Sync IST: " + now.toLocaleTimeString();
+            document.getElementById("live-clock-badge").innerHTML = "Live IST Sync: " + now.toLocaleTimeString();
         }, 1000);
     </script>
 </body>
