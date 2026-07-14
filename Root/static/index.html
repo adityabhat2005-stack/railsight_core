@@ -1,0 +1,34 @@
+<!-- TARGET LOCATION: /static/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RailSight Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="navbar-wrapper">
+        <div class="branding">
+            <h1>RAIL<span>SIGHT</span></h1>
+            <p>Independent Operational Intelligence for Unreserved Commuters</p>
+        </div>
+        <div class="time-control-deck">
+            <label for="time-vector">Current Stations Time Matrix:</label>
+            <input type="time" id="time-vector" value="14:00">
+            <button id="query-trigger" class="query-btn">Refresh Window</button>
+        </div>
+    </header>
+
+    <main class="content-viewport">
+        <div class="telemetry-bar">
+            <span id="route-indicator">Route Configuration: MAJN to Kozhikode Main (CLT)</span>
+            <span id="window-indicator">Rolling Horizon: 3 Hours</span>
+        </div>
+        <div class="timeline-cards-container" id="cards-mount-point">
+            <!-- Populated via Client Javascript Engine -->
+        </div>
+    </main>
+    <script src="app.js"></script>
+</body>
+</html>
