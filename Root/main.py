@@ -27,6 +27,9 @@ if not os.path.exists(MODEL_PATH):
 
 loaded_classifier = joblib.load(MODEL_PATH)
 
+# TARGET LOCATION: /main.py -> Replace the /api/live-corridor routing function
+import pandas as pd # Ensure pandas is imported at the top of your file!
+
 @app.get("/api/live-corridor")
 async def get_live_corridor():
     try:
@@ -98,10 +101,18 @@ async def get_live_corridor():
         live_compiled_trains = []
 
         for train in real_railway_dataset:
-            # Dynamically feed the real time parameters into your ML model
             act_hr, act_min = map(int, train["actual"].split(':'))
-            features = np.array([[act_hr, act_min, day_of_week, is_holiday]], dtype=np.int32)
-            pred_id = int(loaded_classifier.predict(features))
+            
+            # FIX: Format parameters into a proper Pandas DataFrame with matching structural text headers
+            # This stops the sklearn warning logs from cluttering your deployment dashboard screen
+            features_df = pd.DataFrame([{
+                'departure_hour': int(act_hr),
+                'departure_minute': int(act_min),
+                'day_of_the_week': int(day_of_week),
+                'is_holiday': int(is_holiday)
+            }])
+            
+            pred_id = int(loaded_classifier.predict(features_df))
             crowd_mapping = {0: "Available Seating Tiers Present", 1: "Moderate Commuter Standee Load", 2: "Heavy Volume - Expect High Density"}
 
             live_compiled_trains.append({
@@ -123,5 +134,6 @@ async def get_live_corridor():
 
     except Exception as raw_error:
         return {"error": str(raw_error), "trace": traceback.format_exc()}
+
 
 app.mount("/", StaticFiles(directory="static", html=True), name="static")
