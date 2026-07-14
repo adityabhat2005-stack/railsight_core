@@ -25,21 +25,38 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-DATABASE_URL = os.environ.get("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/railsight")
-MODEL_PATH = "crowd_model.pkl"
+# TARGET LOCATION: /main.py -> Replace Connection string and fetch function
 
-if not os.path.exists(MODEL_PATH):
-    from ml_engine import train_and_export_model
-    train_and_export_model(export_path=MODEL_PATH)
+# 1. Isolate Database Pointer Context safely from Environment with a direct connection fallback string option
+DATABASE_URL = os.environ.get("DATABASE_URL")
 
-loaded_classifier = joblib.load(MODEL_PATH)
+# Production fail-safe check to handle raw string parsing issues over Render infrastructure
+if DATABASE_URL and "sslmode=" not in DATABASE_URL:
+    if "?" in DATABASE_URL:
+        DATABASE_URL += "&sslmode=require"
+    else:
+        DATABASE_URL += "?sslmode=require"
 
 def fetch_db_pool_connection():
+    if not DATABASE_URL:
+        raise HTTPException(
+            status_code=500, 
+            detail="CRITICAL ENV ERROR: The DATABASE_URL environment variable is completely blank on Render settings."
+        )
     try:
-        # Connects smoothly to Neon Console using the modern psycopg v3 driver format
-        return psycopg.connect(DATABASE_URL, row_factory=dict_row)
+        # Establishes connection to Serverless Neon using explicit runtime parsing parameters
+        return psycopg.connect(
+            DATABASE_URL, 
+            row_factory=dict_row,
+            conninfo="sslmode=require" if "sslmode" not in DATABASE_URL else ""
+        )
     except Exception as err:
-        raise HTTPException(status_code=500, detail=f"Neon database gateway offline: {str(err)}")
+        # Echoes the explicit database driver diagnostic failure directly back to the UI view for parsing
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Neon connection rejected. Check your variable password string. Driver error trace: {str(err)}"
+        )
+
 
 # TARGET LOCATION: /main.py -> Replace the /api/transit-window endpoint block
 
