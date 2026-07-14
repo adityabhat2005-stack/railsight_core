@@ -12,14 +12,14 @@ def generate_historical_baseline_data(csv_path="historical_commutes.csv", record
     
     hour = np.random.randint(0, 24, size=records)
     minute = np.random.randint(0, 60, size=records)
-    day_of_week = np.random.randint(0, 7, size=records) -- 0: Monday, 6: Sunday
+    day_of_week = np.random.randint(0, 7, size=records) # 0: Monday, 6: Sunday
     is_holiday = np.random.choice([0, 1], size=records, p=[0.88, 0.12])
     
     crowd_density_metrics = []
     for h, d, hol in zip(hour, day_of_week, is_holiday):
         base_weight = 15.0
         
-        -- Apply weight offsets to model realistic morning/evening Kerala commuter rushes
+        # Apply weight offsets to model realistic morning/evening Kerala commuter rushes
         if 7 <= h <= 10:
             base_weight += 50.0
         if 16 <= h <= 19:
@@ -35,7 +35,7 @@ def generate_historical_baseline_data(csv_path="historical_commutes.csv", record
         crowd_density_metrics.append(base_weight)
         
     crowd_array = np.array(crowd_density_metrics)
-    -- Target categorical definitions: 0 = Low, 1 = Medium, 2 = Heavy Rush
+    # Target categorical definitions: 0 = Low, 1 = Medium, 2 = Heavy Rush
     labels = np.where(crowd_array < 30, 0, np.where(crowd_array < 70, 1, 2))
     
     df = pd.DataFrame({
