@@ -6,8 +6,8 @@ import datetime
 from fastapi import FastAPI, Query, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
-import psycopg2
-from psycopg2.extras import RealDictCursor
+import psycopg
+from psycopg.rows import dict_row
 import joblib
 import numpy as np
 
@@ -36,7 +36,8 @@ loaded_classifier = joblib.load(MODEL_PATH)
 
 def fetch_db_pool_connection():
     try:
-        return psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
+        # Connects smoothly to Neon Console using the modern psycopg v3 driver format
+        return psycopg.connect(DATABASE_URL, row_factory=dict_row)
     except Exception as err:
         raise HTTPException(status_code=500, detail=f"Neon database gateway offline: {str(err)}")
 
