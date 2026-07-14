@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RailSight Dashboard | Live Master Telemetry</title>
+    <title>RailSight Dashboard | Live Master Corridor Tracker</title>
     <style>
         :root {
             --dark-bg: #0b0f19;
@@ -75,48 +75,30 @@
         }
         
         .card-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
-        .card-top h3 { font-size: 1.2rem; color: #fff; font-weight: bold; }
+        .card-top h3 { font-size: 1.15rem; color: #fff; font-weight: bold; }
         .train-id-badge { background: #0b0f19; padding: 2px 6px; font-size: 0.75rem; border-radius: 4px; color: var(--sky-accent); font-weight: bold; }
-        
-        .specialty-tag {
-            background: var(--clr-green);
-            color: #000;
-            font-size: 0.7rem;
-            font-weight: bold;
-            padding: 2px 6px;
-            border-radius: 10px;
-            margin-top: 4px;
-            display: inline-block;
-        }
-        
-        .metrics-row { display: flex; justify-content: space-between; background: #0b0f19; padding: 8px; border-radius: 6px; margin: 12px 0; }
+        .specialty-tag { color: #000; font-size: 0.7rem; font-weight: bold; padding: 2px 6px; border-radius: 10px; margin-top: 4px; display: inline-block; }
+        .metrics-row { display: flex; justify-content: space-between; background: #0b0f19; padding: 8px; border-radius: 6px; margin: 10px 0; }
         .metric-cell span { display: block; font-size: 0.7rem; color: var(--text-slate); }
         .metric-cell strong { font-size: 0.95rem; }
-        
         .fare-text { font-size: 0.95rem; margin-bottom: 10px; }
         .fare-text span { font-weight: bold; color: var(--sky-accent); }
-        
         .crowd-indicator { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; background: #0b0f19; padding: 8px; border-radius: 4px; margin-bottom: 12px; border-left: 3px solid var(--sky-accent); }
         .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
         .dot-green { background: var(--clr-green); }
         .dot-amber { background: var(--clr-amber); }
         .dot-red { background: var(--clr-red); }
-
         .live-tracker-panel { background: #0b0f19; padding: 12px; border-radius: 6px; margin-bottom: 14px; border: 1px solid #1e293b; }
         .tracker-header { display: flex; justify-content: space-between; font-size: 0.78rem; color: var(--text-slate); margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid #1e293b; }
         
         .vertical-track { position: relative; padding-left: 20px; margin-top: 5px; }
         .vertical-track::before { content: ''; position: absolute; left: 4px; top: 5px; bottom: 5px; width: 2px; background: #1e293b; }
-        
         .track-node { position: relative; font-size: 0.8rem; color: var(--text-slate); margin-bottom: 8px; padding-left: 5px; }
         .track-node::before { content: ''; position: absolute; left: -19px; top: 4px; width: 8px; height: 8px; background: #475569; border-radius: 50%; }
-        
-        .track-node.passed { color: var(--text-slate); opacity: 0.6; }
+        .track-node.passed { color: var(--text-slate); opacity: 0.5; }
         .track-node.passed::before { background: var(--sky-accent); }
-        
         .track-node.current-location { color: var(--clr-red); font-weight: bold; }
         .track-node.current-location::before { background: var(--clr-red); box-shadow: 0 0 8px var(--clr-red); width: 10px; height: 10px; left: -20px; top: 3px; }
-
         .advisory { padding: 10px; border-radius: 4px; font-size: 0.78rem; font-weight: bold; line-height: 1.3; }
         .alert-GREEN { background: rgba(16,185,129,0.15); border: 1px solid var(--clr-green); color: #34d399; }
         .alert-AMBER { background: rgba(245,158,11,0.15); border: 1px solid var(--clr-amber); color: #fbbf24; }
@@ -141,60 +123,12 @@
             <span>24-Hour Master Unified Grid Active</span>
         </div>
 
-        <div class="timeline-cards-container">
-            
-            <!-- 1. ANTYODAYA EXPRESS CARD -->
-            <div class="card">
-                <div class="card-top">
-                    <div>
-                        <h3>Antyodaya Express</h3>
-                        <div><span class="specialty-tag" style="background:var(--sky-accent); color:#000;">II ANTYODAYA UNIQUE FARE RAKE</span></div>
-                    </div>
-                    <span class="train-id-badge">#12836</span>
-                </div>
-                <div class="metrics-row">
-                    <div class="metric-cell"><span>Class Required</span><strong>Superfast</strong></div>
-                    <div class="metric-cell"><span>Actual Departure</span><strong>04:15</strong> <span style="color:var(--clr-red); font-size:0.7rem;">(+15m Delay)</span></div>
-                </div>
-                <p class="fare-text">UTS Counter Fare: <span>₹187.85</span></p>
-                <div class="crowd-indicator">
-                    <div class="dot dot-green"></div>
-                    <span>AI Crowd Forecast: <strong>Available Seating Tiers Present</strong></span>
-                </div>
-                <div class="live-tracker-panel">
-                    <div class="tracker-header"><span>🛰️ Live Track: Run Completed</span></div>
-                    <div class="vertical-track">
-                        <div class="track-node passed">MAJN (04:15)</div>
-                        <div class="track-node passed">KGQ (04:58)</div>
-                        <div class="track-node passed">CAN (06:12)</div>
-                        <div class="track-node passed">CLT (07:22)</div>
-                    </div>
-                </div>
-                <div class="advisory alert-GREEN">
-                    FINE PROTECTION SECURED: Board safely ONLY with a specific 'II ANTYODAYA' counter ticket. Normal tickets will face fines.
-                </div>
-            </div>
+        <div class="timeline-cards-container" id="cards-mount-point">
+            <!-- Rendered smoothly via compact js engine below -->
+        </div>
+    </main>
 
-            <!-- 2. PARASURAM EXPRESS -->
-            <div class="card">
-                <div class="card-top">
-                    <div>
-                        <h3>Parasuram Express</h3>
-                        <div><span class="specialty-tag" style="background:var(--text-slate); color:#000;">STANDARD UNRESERVED RAKE</span></div>
-                    </div>
-                    <span class="train-id-badge">#16649</span>
-                </div>
-                <div class="metrics-row">
-                    <div class="metric-cell"><span>Class Required</span><strong>Mail/Express</strong></div>
-                    <div class="metric-cell"><span>Actual Departure</span><strong>05:05</strong> <span style="color:var(--clr-green); font-size:0.7rem;">(On Time)</span></div>
-                </div>
-                <p class="fare-text">UTS Counter Fare: <span>₹143.65</span></p>
-                <div class="crowd-indicator">
-                    <div class="dot dot-red"></div>
-                    <span>AI Crowd Forecast: <strong>Heavy Volume - Expect High Density</strong></span>
-                </div>
-                <div class="live-tracker-panel">
-                    <div class="tracker-header"><span>🛰️ Live Track: Run Completed</span></div>
-                    <div class="vertical-track">
-                        <div class="track-node passed">MAQ (05:05)</div>
-                        <div class="track-node passed">KGQ (05:47)</div>
+    <!-- Cache-busting parameter link targets the upgraded script asset -->
+    <script src="app.js?v=final_matrix"></script>
+</body>
+</html>
