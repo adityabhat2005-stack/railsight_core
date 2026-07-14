@@ -15,7 +15,8 @@
         </div>
         <div class="time-control-deck">
             <label for="time-vector">Current Stations Time Matrix:</label>
-            <input type="time" id="time-vector" value="14:00">
+            <!-- Adding step="1" forces the browser to show HH:MM:SS format visually -->
+            <input type="time" id="time-vector" value="14:00:00" step="1">
             <button id="query-trigger" class="query-btn">Refresh Window</button>
         </div>
     </header>
