@@ -1,5 +1,5 @@
 # TARGET LOCATION: /main.py
-# Purpose: Fail-Safe Diagnostic API Routing Engine
+# Purpose: No-Time-Filter Gateway Engine for Immediate Data Delivery
 
 import os
 import datetime
@@ -12,7 +12,7 @@ import joblib
 import numpy as np
 import traceback
 
-app = FastAPI(title="RailSight Diagnostic", version="1.6.0")
+app = FastAPI(title="RailSight Unfiltered Gateway", version="1.7.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -32,98 +32,84 @@ if not os.path.exists(MODEL_PATH):
 loaded_classifier = joblib.load(MODEL_PATH)
 
 def fetch_db_pool_connection():
-    return psycopg.connect(DATABASE_URL, row_factory=dict_row)
+    if not DATABASE_URL:
+        raise ValueError("DATABASE_URL variable is missing in Render environment.")
+    cleaned_url = DATABASE_URL
+    if "sslmode" not in cleaned_url:
+        cleaned_url += "&sslmode=require" if "?" in cleaned_url else "?sslmode=require"
+    return psycopg.connect(cleaned_url, row_factory=dict_row)
 
 @app.get("/api/transit-window")
 async def get_transit_window(time_now: str = Query(None)):
     try:
+        # Track the input time purely for logging and dashboard display meta properties
         if not time_now:
-            utc_now = datetime.datetime.now(datetime.timezone.utc)
-            ist_offset = datetime.timedelta(hours=5, minutes=30)
-            ist_now = utc_now + ist_offset
-            parsed_time_obj = ist_now.time()
-            time_str = ist_now.strftime("%H:%M:%S")
-            current_date = ist_now.date()
+            time_str = "Live Clock Sync"
         else:
-            if len(time_now.split(':')) == 2:
-                time_now = f"{time_now}:00"
-            parsed_time_obj = datetime.time.fromisoformat(time_now)
             time_str = time_now
-            current_date = datetime.date.today()
 
+        current_date = datetime.date.today()
         day_of_week = current_date.weekday()
         day_str = str(day_of_week)
         is_holiday = 1 if day_of_week == 6 else 0
 
-        dummy_date = datetime.date.today()
-        combined_dt = datetime.datetime.combine(dummy_date, parsed_time_obj)
-        upper_bound_dt = combined_dt + datetime.timedelta(hours=3)
-        upper_bound_time_obj = upper_bound_dt.time()
-
         conn = fetch_db_pool_connection()
         cursor = conn.cursor()
 
-        # 1. Try standard 3-hour operational calendar query
-        if upper_bound_time_obj < parsed_time_obj:
-            query = """
-                SELECT s.*, m.train_name, c.category_name, c.base_fare_per_km, m.is_specialty_unreserved
-                FROM Live_Schedules s
-                JOIN Train_Master m ON s.train_no = m.train_no
-                JOIN Train_Category c ON m.category_id = c.category_id
-                WHERE c.is_premium = FALSE
-                  AND (m.running_days LIKE '%%' || %s || '%%')
-                  AND (s.actual_departure >= %s OR s.actual_departure <= %s)
-                ORDER BY s.actual_departure ASC;
-            """
-        else:
-            query = """
-                SELECT s.*, m.train_name, c.category_name, c.base_fare_per_km, m.is_specialty_unreserved
-                FROM Live_Schedules s
-                JOIN Train_Master m ON s.train_no = m.train_no
-                JOIN Train_Category c ON m.category_id = c.category_id
-                WHERE c.is_premium = FALSE
-                  AND (m.running_days LIKE '%%' || %s || '%%')
-                  AND s.actual_departure >= %s AND s.actual_departure <= %s
-                ORDER BY s.actual_departure ASC;
-            """
+        # REMOVED FILTER LAYER: The 3-hour time check is completely gone! 
+        # This scans your entire 24-hour table setup matching the day.
+        query = """
+            SELECT s.*, m.train_name, c.category_name, c.base_fare_per_km, m.is_specialty_unreserved
+            FROM Live_Schedules s
+            JOIN Train_Master m ON s.train_no = m.train_no
+            JOIN Train_Category c ON m.category_id = c.category_id
+            WHERE c.is_premium = FALSE
+              AND (m.running_days LIKE '%%' || %s || '%%')
+            ORDER BY s.actual_departure ASC;
+        """
 
-        cursor.execute(query, [day_str, parsed_time_obj, upper_bound_time_obj])
+        cursor.execute(query, [day_str])
         active_records = cursor.fetchall()
-        is_diagnostic_mode = False
-
-        # 2. FAIL-SAFE CRITICAL BYPASS: If nothing runs inside that window, grab ANY train to show data works!
-        if len(active_records) == 0:
-            is_diagnostic_mode = True
-            fallback_query = """
-                SELECT s.*, m.train_name, c.category_name, c.base_fare_per_km, m.is_specialty_unreserved
-                FROM Live_Schedules s
-                JOIN Train_Master m ON s.train_no = m.train_no
-                JOIN Train_Category c ON m.category_id = c.category_id
-                ORDER BY s.actual_departure ASC LIMIT 5;
-            """
-            cursor.execute(fallback_query)
-            active_records = cursor.fetchall()
         
         compiled_results = []
 
         for row in active_records:
             act_dep_val = row['actual_departure']
-            h, m = (act_dep_val.hour, act_dep_val.minute) if hasattr(act_dep_val, 'hour') else map(int, str(act_dep_val).split(':')[:2])
-            act_str = f"{h:02d}:{m:02d}"
+            if hasattr(act_dep_val, 'hour'):
+                h, m = act_dep_val.hour, act_dep_val.minute
+                act_str = act_dep_val.strftime("%H:%M")
+            else:
+                time_parts = str(act_dep_val).split(':')
+                h, m = int(time_parts[0]), int(time_parts[1])
+                act_str = f"{h:02d}:{m:02d}"
 
             sched_dep_val = row['scheduled_departure']
             sched_str = sched_dep_val.strftime("%H:%M") if hasattr(sched_dep_val, 'hour') else str(sched_dep_val)[:5]
 
+            # Custom Machine Learning inference prediction using the evaluated departure parameters
             features = np.array([[h, m, day_of_week, is_holiday]], dtype=np.int32)
             pred_id = int(loaded_classifier.predict(features))
             crowd_mapping = {0: "Low Density Available", 1: "Medium Commuter Volume", 2: "Heavy Rush - Expect Crowding"}
 
             calculated_fare = float(row['distance_km']) * float(row['base_fare_per_km'])
             category = str(row['category_name'])
-            is_specialty_flag = bool(row['is_specialty_unreserved'])
+            is_specialty_flag = str(row['is_specialty_unreserved']).lower() in ['true', '1', 't', 'yes']
 
-            fine_text = "FINE PROTECTION SECURED: Fully Unreserved Train configuration." if is_specialty_flag else f"TTE COMPLIANCE: {category} Ticket Mandatory."
-            alert_color = "GREEN" if is_specialty_flag else "ORANGE"
+            if is_specialty_flag:
+                fine_text = "FINE PROTECTION SECURED: Fully Unreserved Train configuration. Step inside with a General Ticket."
+                alert_color = "GREEN"
+            elif category == "Ordinary":
+                fine_text = "COMPLIANCE NOTICE: Valid for basic Ordinary Counter ticket."
+                alert_color = "AMBER"
+            elif category == "Express":
+                fine_text = "TTE PENALTY NOTICE: Express Ticket Mandatory. Basic ticket will face fines."
+                alert_color = "ORANGE"
+            elif category == "Superfast":
+                fine_text = "CRITICAL LEGAL ADVISORY: Superfast Supplementary Surcharge Required."
+                alert_color = "RED"
+            else:
+                fine_text = "Standard documentation tracking requirements applicable."
+                alert_color = "GRAY"
 
             compiled_results.append({
                 "train_no": int(row['train_no']),
@@ -143,16 +129,7 @@ async def get_transit_window(time_now: str = Query(None)):
 
         cursor.close()
         conn.close()
-        
-        return {
-            "meta": {
-                "query_time": time_str, 
-                "route": "MAJN -> CLT", 
-                "diagnostic_override": is_diagnostic_mode,
-                "total_rows_found": len(compiled_results)
-            }, 
-            "trains": compiled_results
-        }
+        return {"meta": {"query_time": time_str, "route": "MAJN -> CLT (Time Filter Disabled)"}, "trains": compiled_results}
 
     except Exception as raw_error:
         return {"meta": {"query_time": "00:00:00", "route": "ERROR"}, "trains": [], "error_diagnostics": {"message": str(raw_error), "trace": traceback.format_exc()}}
