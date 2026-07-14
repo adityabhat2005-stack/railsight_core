@@ -1,123 +1,180 @@
-// TARGET LOCATION: /static/app.js
-document.addEventListener("DOMContentLoaded", () => {
-    const mountPoint = document.getElementById("cards-mount-point");
-    const liveClockBadge = document.getElementById("live-clock-badge");
+# TARGET LOCATION: /main.py
+# Purpose: Chronologically Accurate 24HR Transit Simulator Gateway Engine (Fixed Comments Syntax)
 
-    async function streamLiveRailwayData() {
-        try {
-            const res = await fetch('/api/live-corridor');
-            if (!res.ok) throw new Error(`HTTP Status Vector Error: ${res.status}`);
-            const payload = await res.json();
-            
-            if (payload && payload.trains) {
-                renderLiveInterface(payload.trains);
-            }
-        } catch (err) {
-            mountPoint.innerHTML = `<div style="grid-column:1/-1; padding:15px; border:1px solid var(--clr-red); color:var(--clr-red); border-radius:6px; background:rgba(239,64,64,0.1);"><strong>Handshake Vector Breakdown:</strong> ${err.message}</div>`;
-        }
-    }
+import os
+import datetime
+from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
+from fastapi.middleware.cors import CORSMiddleware
+import traceback
 
-    function renderLiveInterface(trains) {
-        mountPoint.innerHTML = "";
+app = FastAPI(title="RailSight Dynamic Time-Tracking Engine", version="9.1.0")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+@app.get("/api/live-corridor")
+async def get_live_corridor():
+    try:
+        # 1. Sync precise local Indian Standard Time (IST) clock properties
+        utc_now = datetime.datetime.now(datetime.timezone.utc)
+        ist_now = utc_now + datetime.timedelta(hours=5, minutes=30)
+        h, m = ist_now.hour, ist_now.minute
+        total_sys_mins = (h * 60) + m
+        day_of_week = ist_now.weekday()
         
-        trains.forEach(t => {
-            if (!t) return;
-            const card = document.createElement("div");
-            card.className = "card";
-            
-            const rawFare = t.fare || 0.00;
-            const fareDisplayStr = Number(rawFare).toFixed(2);
+        is_weekend_peak = day_of_week in [4, 5, 6]
 
-            // 1. Dynamic Badge Generation Layer
-            let specBadge = `<div><span class="specialty-tag" style="background:var(--text-slate); color:#000;">STANDARD UNRESERVED RAKE</span></div>`;
-            if (t.train_no === 12836) {
-                specBadge = `<div><span class="specialty-tag" style="background:var(--sky-accent); color:#000;">II ANTYODAYA UNIQUE FARE RAKE</span></div>`;
-            } else if (t.train_no === 13434) {
-                specBadge = `<div><span class="specialty-tag" style="background:var(--clr-amber); color:#000;">AMRIT BHARAT SPEED RAKE</span></div>`;
-            } else if (t.category === "MEMU Service") {
-                specBadge = `<div><span class="specialty-tag" style="background:var(--clr-green); color:#000;">HIGH-CAPACITY MEMU SERVICE</span></div>`;
-            } else if (t.category === "Ordinary Passenger") {
-                specBadge = `<div><span class="specialty-tag" style="background:rgba(56,189,248,0.2); color:var(--sky-accent);">PASSENGER COUPLING LOCAL</span></div>`;
+        # 2. SEED RAW FACTUAL DATA MATRIX WITH INTERNAL NODAL TIMELINES (Mins From Midnight)
+        real_railway_dataset = [
+            {
+                "train_no": 12836, "train_name": "Antyodaya Express", "sched": "04:00", "actual": "04:15", "delay": 15, "fare": 187.85, "category": "Superfast",
+                "start_min": 255, "end_min": 442,  # 04:15 AM to 07:22 AM
+                "nodes": [
+                    {"name": "MAJN (04:15)", "min": 255},
+                    {"name": "KGQ (04:58)", "min": 298},
+                    {"name": "CAN (06:12)", "min": 372},
+                    {"name": "CLT (07:22)", "min": 442}
+                ]
+            },
+            {
+                "train_no": 16649, "train_name": "Parasuram Express", "sched": "05:05", "actual": "05:05", "delay": 0, "fare": 143.65, "category": "Mail/Express",
+                "start_min": 305, "end_min": 512,  # 05:05 AM to 08:32 AM
+                "nodes": [
+                    {"name": "MAQ (05:05)", "min": 305},
+                    {"name": "KGQ (05:47)", "min": 347},
+                    {"name": "CAN (07:07)", "min": 427},
+                    {"name": "CLT (08:32)", "min": 512}
+                ]
+            },
+            {
+                "train_no": 16610, "train_name": "MAQ - Palakkad Passenger Local", "sched": "05:15", "actual": "05:30", "delay": 15, "fare": 110.00, "category": "Ordinary Passenger",
+                "start_min": 330, "end_min": 552,  # 05:30 AM to 09:12 AM
+                "nodes": [
+                    {"name": "MAQ (05:30)", "min": 330},
+                    {"name": "KGQ (06:20)", "min": 380},
+                    {"name": "CAN (07:45)", "min": 465},
+                    {"name": "CLT (09:12)", "min": 552}
+                ]
+            },
+            {
+                "train_no": 6486, "train_name": "Mangaluru - Kozhikode MEMU Special", "sched": "06:45", "actual": "06:45", "delay": 0, "fare": 110.00, "category": "MEMU Service",
+                "start_min": 405, "end_min": 670,  # 06:45 AM to 11:10 AM
+                "nodes": [
+                    {"name": "MAQ (06:45)", "min": 405},
+                    {"name": "KGQ (07:40)", "min": 460},
+                    {"name": "PAY (08:35)", "min": 515},
+                    {"name": "CAN (09:15)", "min": 555},
+                    {"name": "CLT (11:10)", "min": 670}
+                ]
+            },
+            {
+                "train_no": 16160, "train_name": "MAJN - Chennai Passenger Local", "sched": "06:55", "actual": "07:15", "delay": 20, "fare": 110.00, "category": "Ordinary Passenger",
+                "start_min": 435, "end_min": 647,  # 07:15 AM to 10:47 AM
+                "nodes": [
+                    {"name": "MAJN (07:15)", "min": 435},
+                    {"name": "KGQ (08:12)", "min": 492},
+                    {"name": "CAN (09:30)", "min": 570},
+                    {"name": "CLT (10:47)", "min": 647}
+                ]
+            },
+            {
+                "train_no": 15102, "train_name": "Jan Sadharan Express", "sched": "10:45", "actual": "10:45", "delay": 0, "fare": 143.65, "category": "Express Run",
+                "start_min": 645, "end_min": 850,  # 10:45 AM to 02:10 PM
+                "nodes": [
+                    {"name": "MAQ (10:45)", "min": 645},
+                    {"name": "KGQ (11:28)", "min": 688},
+                    {"name": "PAY (12:15)", "min": 735},
+                    {"name": "CLT (14:10)", "min": 850}
+                ]
+            },
+            {
+                "train_no": 16348, "train_name": "Mangaluru - Trivandrum Express", "sched": "14:25", "actual": "14:35", "delay": 10, "fare": 143.65, "category": "Mail/Express",
+                "start_min": 875, "end_min": 1057,  # 02:35 PM to 05:37 PM
+                "nodes": [
+                    {"name": "MAQ (14:35)", "min": 875},
+                    {"name": "KGQ (15:20)", "min": 920},
+                    {"name": "CAN (16:40)", "min": 1000},
+                    {"name": "CLT (17:37)", "min": 1057}
+                ]
+            },
+            {
+                "train_no": 13434, "train_name": "Amrit Bharat Express", "sched": "15:45", "actual": "16:15", "delay": 30, "fare": 187.85, "category": "Superfast",
+                "start_min": 975, "end_min": 1165,  # 04:15 PM to 07:25 PM
+                "nodes": [
+                    {"name": "MAQ (16:15)", "min": 975},
+                    {"name": "KGQ (17:05)", "min": 1025},
+                    {"name": "PAY (17:48)", "min": 1068},
+                    {"name": "CAN (18:25)", "min": 1105},
+                    {"name": "TLY (18:48)", "min": 1128},
+                    {"name": "CLT (19:25)", "min": 1165}
+                ]
+            },
+            {
+                "train_no": 16630, "train_name": "Malabar Express (Night Corridor)", "sched": "18:15", "actual": "18:15", "delay": 0, "fare": 143.65, "category": "Mail/Express",
+                "start_min": 1095, "end_min": 1300,  # 06:15 PM to 09:40 PM
+                "nodes": [
+                    {"name": "MAQ (18:15)", "min": 1095},
+                    {"name": "KGQ (18:55)", "min": 1135},
+                    {"name": "CAN (20:15)", "min": 1215},
+                    {"name": "CLT (21:40)", "min": 1300}
+                ]
+            },
+            {
+                "train_no": 16604, "train_name": "Maveli Express (Night Corridor)", "sched": "19:35", "actual": "19:50", "delay": 15, "fare": 143.65, "category": "Mail/Express",
+                "start_min": 1190, "end_min": 1395,  # 07:50 PM to 11:15 PM
+                "nodes": [
+                    {"name": "MAQ (19:50)", "min": 1190},
+                    {"name": "KGQ (20:35)", "min": 1235},
+                    {"name": "CAN (21:55)", "min": 1315},
+                    {"name": "CLT (23:15)", "min": 1395}
+                ]
             }
+        ]
 
-            const currentDelay = t.delay || 0;
-            const delayStatus = currentDelay > 0 
-                ? `<span style="color:var(--clr-red); font-size:0.75rem; font-weight:bold;">(+${currentDelay}m Delay)</span>` 
-                : `<span style="color:var(--clr-green); font-size:0.75rem; font-weight:bold;">On Time</span>`;
+        # 3. ADVANCED CHRONOLOGICAL EVALUATOR LOOP
+        for t in real_railway_dataset:
+            # Case A: Train has not started its journey yet
+            if total_sys_mins < t["start_min"]:
+                t["status_message"] = f"Awaiting Start from yard. Expected departure at {t['actual']}."
+                for node in t["nodes"]:
+                    node["state"] = "upcoming"
             
-            // 2. Dynamic TTE Fine Advisory Rule Evaluator
-            let colorState = "GREEN";
-            let advisoryText = "FINE PROTECTION SECURED: Basic Unreserved ticket fully valid. Board any available general coach safely.";
-            
-            if (t.train_no === 12836) { 
-                advisoryText = "FINE PROTECTION SECURED: Board safely ONLY with a specific 'II ANTYODAYA' counter ticket. Normal tickets will face fines."; 
-            } else if (t.category === "Superfast") {
-                colorState = "RED";
-                advisoryText = "CRITICAL LEGAL ADVISORY: Superfast Surcharge Ticket Required. Traveling on this fleet with an ordinary general ticket incurs an automatic penalty fine.";
-            } else if (t.category === "Mail/Express") {
-                colorState = "ORANGE";
-                advisoryText = "TTE PENALTY ALERT: Mail/Express ticket required. Basic Ordinary Passenger counter tickets are completely invalid.";
-            } else if (t.category === "Ordinary Passenger" || t.category === "MEMU Service") {
-                colorState = "GREEN";
-                advisoryText = "COMPLIANCE SECURED: Cheapest Ordinary general ticket or MEMU pass fully accepted. Lowest operation pricing tier applied.";
-            }
+            # Case B: Train has completely finished its run past destination terminal
+            elif total_sys_mins > t["end_min"]:
+                t["status_message"] = "Run Completed on Schedule - Rake Terminated."
+                for node in t["nodes"]:
+                    node["state"] = "passed"
+                t["nodes"][-1]["state"] = "passed"
 
-            let nodesHTML = "";
-            if (t.nodes && t.nodes.length > 0) {
-                t.nodes.forEach(node => {
-                    let nodeClass = "track-node";
-                    if (node.state === "passed") nodeClass += " passed";
-                    if (node.state === "current-location") nodeClass += " current-location";
-                    
-                    let prefixIcon = node.state === "current-location" ? "📍 " : "";
-                    nodesHTML += `<div class="${nodeClass}">${prefixIcon}${node.name}</div>`;
-                });
-            }
-
-            let dotClass = "dot-green";
-            if (t.crowd_id === 1) dotClass = "dot-amber";
-            if (t.crowd_id === 2) dotClass = "dot-red";
-
-            card.innerHTML = `
-                <div class="card-top">
-                    <div>
-                        <h3 style="margin-bottom:2px;">${t.train_name}</h3>
-                        ${specBadge}
-                    </div>
-                    <span class="train-id-badge">#${t.train_no}</span>
-                </div>
-                <div class="metrics-row">
-                    <div class="metric-cell"><span>Service Tier</span><strong>${t.category}</strong></div>
-                    <div class="metric-cell"><span>Actual Dep</span><strong>${t.actual}</strong> ${delayStatus}</div>
-                </div>
-                <p class="fare-text">UTS Counter Fare: <span>₹${fareDisplayStr}</span></p>
-                <div class="crowd-indicator">
-                    <div class="dot ${dotClass}"></div>
-                    <span>AI Crowd Forecast: <strong>${t.crowd_level}</strong></span>
-                </div>
+            # Case C: Train is actively on the tracks running right now!
+            else:
+                t["status_message"] = f"In Transit along the corridor. Running with {t['delay']}m delay parameters."
                 
-                <div class="live-tracker-panel">
-                    <div class="tracker-header">
-                        <span>🛰️ Live Track: <strong style="color:var(--sky-accent);">${t.status_message}</strong></span>
-                    </div>
-                    <div class="vertical-track">
-                        ${nodesHTML}
-                    </div>
-                </div>
+                active_node_index = 0
+                for idx, node in enumerate(t["nodes"]):
+                    if total_sys_mins >= node["min"]:
+                        node["state"] = "passed"
+                        active_node_index = idx
+                    else:
+                        node["state"] = "upcoming"
+                
+                t["nodes"][active_node_index]["state"] = "current-location"
 
-                <div class="advisory alert-${colorState}">
-                    ${advisoryText}
-                </div>
-            `;
-            mountPoint.appendChild(card);
-        });
-    }
+            # Cleanup internal mathematical tracking metrics before serializing JSON
+            del t["start_min"]
+            del t["end_min"]
+            for node in t["nodes"]:
+                del node["min"]
 
-    setInterval(() => {
-        const now = new Date();
-        liveClockBadge.innerHTML = "Live Sync IST: " + now.toLocaleTimeString();
-    }, 1000);
+        return {"meta": {"sync_time": ist_now.strftime("%H:%M:%S")}, "trains": real_railway_dataset}
 
-    streamLiveRailwayData();
-    setInterval(streamLiveRailwayData, 15000);
-});
+    except Exception as raw_error:
+        return {"meta": {"sync_time": "00:00:00"}, "trains": [], "error": str(raw_error), "trace": traceback.format_exc()}
+
+app.mount("/", StaticFiles(directory="static", html=True), name="static")
