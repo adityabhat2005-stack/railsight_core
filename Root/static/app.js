@@ -1,5 +1,5 @@
 // TARGET LOCATION: /static/app.js
-// Purpose: Defensive Key-Checking Live Rendering Engine
+// Purpose: Zero-Exception Client Re-Renderer Engine
 
 document.addEventListener("DOMContentLoaded", () => {
     const mountPoint = document.getElementById("cards-mount-point");
@@ -10,7 +10,13 @@ document.addEventListener("DOMContentLoaded", () => {
             const res = await fetch('/api/live-corridor');
             if (!res.ok) throw new Error(`HTTP System Code Verification Error: ${res.status}`);
             const payload = await res.json();
-            renderLiveInterface(payload.trains);
+            
+            // Defensively isolate the train data array layout parameters
+            if (payload && payload.trains) {
+                renderLiveInterface(payload.trains);
+            } else {
+                throw new Error("Data stream missing standard trains list schema.");
+            }
         } catch (err) {
             mountPoint.innerHTML = `<div style="grid-column:1/-1; padding:15px; border:1px solid var(--clr-red); color:var(--clr-red); border-radius:6px; background:rgba(239,64,64,0.1);"><strong>Handshake Vector Breakdown:</strong> ${err.message}</div>`;
         }
@@ -25,12 +31,14 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         trains.forEach(t => {
+            if (!t) return; // Skip empty elements
+            
             const card = document.createElement("div");
             card.className = "card";
             
-            // Handle different variations of fare naming keys defensively to prevent crashes
-            const rawFare = t.fare || t.base_fare || 0.00;
-            const fareDisplay = Number(rawFare).toFixed(2);
+            // Clean pricing parsing check rules
+            const currentFareVal = t.fare || t.base_fare || 0.00;
+            const fareDisplayStr = Number(currentFareVal).toFixed(2);
 
             let specBadge = `<div><span class="specialty-tag">FULLY UNRESERVED EXPRESS</span></div>`;
             if (t.train_no === 12836) {
@@ -39,8 +47,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 specBadge = `<div><span class="specialty-tag" style="background:var(--clr-amber); color:#000;">AMRIT BHARAT SPEED RAKE</span></div>`;
             }
 
-            const delayStatus = t.delay > 0 
-                ? `<span style="color:var(--clr-red); font-size:0.75rem; font-weight:bold;">(+${t.delay}m Delay)</span>` 
+            const currentDelay = t.delay || 0;
+            const delayStatus = currentDelay > 0 
+                ? `<span style="color:var(--clr-red); font-size:0.75rem; font-weight:bold;">(+${currentDelay}m Delay)</span>` 
                 : `<span style="color:var(--clr-green); font-size:0.75rem; font-weight:bold;">On Time</span>`;
             
             let colorState = "GREEN";
@@ -56,7 +65,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     if (node.state === "current-location") nodeClass += " current-location";
                     
                     let prefixIcon = node.state === "current-location" ? "📍 " : "";
-                    nodesHTML += `<div class="${nodeClass}">${prefixIcon}${node.name}</div>`;
+                    nodesHTML += `<div class="${nodeClass}">${prefixIcon}${node.name || "Station"}</div>`;
                 });
             }
 
@@ -67,16 +76,16 @@ document.addEventListener("DOMContentLoaded", () => {
             card.innerHTML = `
                 <div class="card-top">
                     <div>
-                        <h3>${t.train_name || "Unknown Train"}</h3>
+                        <h3>${t.train_name || "Special Corridor Fleet"}</h3>
                         ${specBadge}
                     </div>
-                    <span class="train-id-badge">#${t.train_no}</span>
+                    <span class="train-id-badge">#${t.train_no || "00000"}</span>
                 </div>
                 <div class="metrics-row">
                     <div class="metric-cell"><span>Class Required</span><strong>${t.category || "General"}</strong></div>
-                    <div class="metric-cell"><span>Actual Dep</span><strong>${t.actual || t.scheduled}</strong> ${delayStatus}</div>
+                    <div class="metric-cell"><span>Actual Dep</span><strong>${t.actual || "00:00"}</strong> ${delayStatus}</div>
                 </div>
-                <p class="fare-text">Unreserved Counter Fare: <span>₹${fareDisplay}</span></p>
+                <p class="fare-text">Unreserved Counter Fare: <span>₹${fareDisplayStr}</span></p>
                 <div class="crowd-indicator">
                     <div class="dot ${dotClass}"></div>
                     <span>AI Crowd Forecast: <strong>${t.crowd_level || "Normal volume"}</strong></span>
@@ -99,13 +108,13 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Ticking visual navbar clock implementation loop
+    // Interactive navbar clock loop
     setInterval(() => {
         const now = new Date();
         liveClockBadge.innerHTML = "Live Sync IST: " + now.toLocaleTimeString();
     }, 1000);
 
-    // Bootstrap app sequence loops
+    // Launch data execution streams
     streamLiveRailwayData();
     setInterval(streamLiveRailwayData, 15000);
 });
