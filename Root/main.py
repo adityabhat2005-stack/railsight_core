@@ -90,15 +90,15 @@ async def get_transit_window(time_now: str = Query(None, description="ISO HH:MM:
         act_dep_obj = row['actual_departure']
         h, m = act_dep_obj.hour, act_dep_obj.minute
         
-        -- Feed parameters directly into loaded Random Forest model
+        # Feed parameters directly into loaded Random Forest model
         features = np.array([[h, m, day_of_week, is_holiday]])
         pred_id = int(loaded_classifier.predict(features)[0])
         crowd_mapping = {0: "Low Density Available", 1: "Medium Commuter Volume", 2: "Heavy Rush"}
         
-        -- Automated Fare Mapping Script Calculation Engine
+        # Automated Fare Mapping Script Calculation Engine
         calculated_fare = float(row['distance_km'] * row['base_fare_per_km'])
         
-        -- Proactive Fine Protection Legal Mapping Logic Block
+        # Proactive Fine Protection Legal Mapping Logic Block
         category = row['category_name']
         if row['is_specialty_unreserved']:
             fine_text = "FINE PROTECTION SECURED: Fully Unreserved Train Configuration. Board cleanly with basic General class paper tickets."
