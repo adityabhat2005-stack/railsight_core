@@ -1,5 +1,5 @@
 # TARGET LOCATION: /main.py
-# Purpose: FastAPI Async Core Database Query Operations Routing Engine
+# Purpose: Final Stable Asynchronous API Gateway running on Psycopg3
 
 import os
 import datetime
@@ -10,13 +10,15 @@ import psycopg
 from psycopg.rows import dict_row
 import joblib
 import numpy as np
+import traceback
 
 app = FastAPI(
-    title="RailSight Engine Gateway",
-    description="Production Endpoint Matrix serving the MAJN-CLT Unreserved Commuter Space",
-    version="1.0.0"
+    title="RailSight Ultimate Gateway",
+    description="Production Router Core matching Python 3.14.3 constraints",
+    version="1.1.0"
 )
 
+# Cross-Origin Isolation configuration for frontend mounting maps
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -25,151 +27,135 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# TARGET LOCATION: /main.py -> Replace Connection string and fetch function
+DATABASE_URL = os.environ.get("DATABASE_URL", "")
+MODEL_PATH = "crowd_model.pkl"
 
-# 1. Isolate Database Pointer Context safely from Environment with a direct connection fallback string option
-DATABASE_URL = os.environ.get("DATABASE_URL")
+if not os.path.exists(MODEL_PATH):
+    from ml_engine import train_and_export_model
+    train_and_export_model(export_path=MODEL_PATH)
 
-# Production fail-safe check to handle raw string parsing issues over Render infrastructure
-if DATABASE_URL and "sslmode=" not in DATABASE_URL:
-    if "?" in DATABASE_URL:
-        DATABASE_URL += "&sslmode=require"
-    else:
-        DATABASE_URL += "?sslmode=require"
+loaded_classifier = joblib.load(MODEL_PATH)
 
 def fetch_db_pool_connection():
     if not DATABASE_URL:
-        raise HTTPException(
-            status_code=500, 
-            detail="CRITICAL ENV ERROR: The DATABASE_URL environment variable is completely blank on Render settings."
-        )
-    try:
-        # Establishes connection to Serverless Neon using explicit runtime parsing parameters
-        return psycopg.connect(
-            DATABASE_URL, 
-            row_factory=dict_row,
-            conninfo="sslmode=require" if "sslmode" not in DATABASE_URL else ""
-        )
-    except Exception as err:
-        # Echoes the explicit database driver diagnostic failure directly back to the UI view for parsing
-        raise HTTPException(
-            status_code=500, 
-            detail=f"Neon connection rejected. Check your variable password string. Driver error trace: {str(err)}"
-        )
-
-
-# TARGET LOCATION: /main.py -> Replace the /api/transit-window endpoint block
+        raise ValueError("CRITICAL INITIALIZATION CRASH: The DATABASE_URL secret parameter is empty on Render settings.")
+    # Append required SSL flag to authorize handshake safely across Neon nodes
+    cleaned_url = DATABASE_URL
+    if "sslmode" not in cleaned_url:
+        cleaned_url += "&sslmode=require" if "?" in cleaned_url else "?sslmode=require"
+    return psycopg.connect(cleaned_url, row_factory=dict_row)
 
 @app.get("/api/transit-window")
-async def get_transit_window(time_now: str = Query(None, description="ISO HH:MM:SS format constraint")):
-    if not time_now:
-        now_dt = datetime.datetime.now()
-        time_str = now_dt.strftime("%H:%M:%S")
-        current_date = now_dt.date()
-    else:
-        try:
-            # Safely handle shorter time strings like '14:00' coming from the HTML frontend
+async def get_transit_window(time_now: str = Query(None, description="ISO input window index profile")):
+    try:
+        if not time_now:
+            now_dt = datetime.datetime.now()
+            time_str = now_dt.strftime("%H:%M:%S")
+            current_date = now_dt.date()
+        else:
             if len(time_now.split(':')) == 2:
                 time_now = f"{time_now}:00"
             parsed_t = datetime.time.fromisoformat(time_now)
             time_str = parsed_t.strftime("%H:%M:%S")
             current_date = datetime.date.today()
-        except ValueError:
-            raise HTTPException(status_code=400, detail="Invalid time payload. Use exact HH:MM:SS format.")
 
-    day_of_week = current_date.weekday()
-    is_holiday = 1 if day_of_week == 6 else 0  # Sunday validation flag logic
-    
-    conn = fetch_db_pool_connection()
-    cursor = conn.cursor()
-    
-    # Real-time UTS-style rolling 3-hour constraint
-    # Automatically filters out restricted premium services server-side
-    query = """
-        SELECT 
-            s.schedule_id, s.train_no, m.train_name, c.category_name, 
-            c.base_fare_per_km, m.is_specialty_unreserved, s.distance_km, 
-            s.scheduled_departure, s.delay_minutes, s.actual_departure
-        FROM Live_Schedules s
-        JOIN Train_Master m ON s.train_no = m.train_no
-        JOIN Train_Category c ON m.category_id = c.category_id
-        WHERE c.is_premium = FALSE
-          AND s.actual_departure >= %s::TIME
-          AND s.actual_departure <= (%s::TIME + INTERVAL '3 hours')::TIME
-        ORDER BY s.actual_departure ASC;
-    """
-    
-    try:
-        cursor.execute(query, (time_str, time_str))
+        day_of_week = current_date.weekday()
+        is_holiday = 1 if day_of_week == 6 else 0
+
+        # Boot db session context safely
+        conn = fetch_db_pool_connection()
+        cursor = conn.cursor()
+
+        # Target Query Layout: Clean positional parameters matching psycopg v3 spec layout
+        query = """
+            SELECT 
+                s.schedule_id, s.train_no, m.train_name, c.category_name, 
+                c.base_fare_per_km, m.is_specialty_unreserved, s.distance_km, 
+                s.scheduled_departure, s.delay_minutes, s.actual_departure
+            FROM Live_Schedules s
+            JOIN Train_Master m ON s.train_no = m.train_no
+            JOIN Train_Category c ON m.category_id = c.category_id
+            WHERE c.is_premium = FALSE
+              AND s.actual_departure >= %s::TIME
+              AND s.actual_departure <= (%s::TIME + INTERVAL '3 hours')::TIME
+            ORDER BY s.actual_departure ASC;
+        """
+
+        cursor.execute(query, [time_str, time_str])
         active_records = cursor.fetchall()
-    except Exception as query_err:
+        
+        compiled_results = []
+
+        for row in active_records:
+            # Safe string casting conversions to protect against datetime data parsing bugs
+            act_dep_val = row['actual_departure']
+            if hasattr(act_dep_val, 'hour'):
+                h, m = act_dep_val.hour, act_dep_val.minute
+                act_str = act_dep_val.strftime("%H:%M")
+            else:
+                # Fallback string isolation layer splitter
+                time_parts = str(act_dep_val).split(':')
+                h, m = int(time_parts[0]), int(time_parts[1])
+                act_str = f"{h:02d}:{m:02d}"
+
+            sched_dep_val = row['scheduled_departure']
+            sched_str = sched_dep_val.strftime("%H:%M") if hasattr(sched_dep_val, 'hour') else str(sched_dep_val)[:5]
+
+            # Trigger lightweight AI predictive classification row array mappings
+            features = np.array([[h, m, day_of_week, is_holiday]], dtype=np.int32)
+            pred_id = int(loaded_classifier.predict(features)[0])
+            crowd_mapping = {0: "Low Density Available", 1: "Medium Commuter Volume", 2: "Heavy Rush"}
+
+            calculated_fare = float(row['distance_km']) * float(row['base_fare_per_km'])
+            category = str(row['category_name'])
+
+            if row['is_specialty_unreserved']:
+                fine_text = "FINE PROTECTION SECURED: Fully Unreserved Train Configuration. Step directly inside with common General Ticket."
+                alert_color = "GREEN"
+            elif category == "Ordinary":
+                fine_text = "COMPLIANCE NOTICE: Valid for basic Ordinary Counter ticket. Express/Superfast ticket holdings not requested."
+                alert_color = "AMBER"
+            elif category == "Express":
+                fine_text = "TTE PENALTY NOTICE: Express Ticket Mandatory. Holding an Ordinary category ticket will trigger standard penalty fees."
+                alert_color = "ORANGE"
+            elif category == "Superfast":
+                fine_text = "CRITICAL LEGAL ADVISORY: Superfast Supplementary Surcharge Required. Boarding with un-upgraded tiers results in an automatic fine."
+                alert_color = "RED"
+            else:
+                fine_text = "Standard documentation tracking requirements applicable."
+                alert_color = "GRAY"
+
+            compiled_results.append({
+                "train_no": int(row['train_no']),
+                "train_name": str(row['train_name']),
+                "category": category,
+                "is_specialty": bool(row['is_specialty_unreserved']),
+                "distance": float(row['distance_km']),
+                "scheduled": sched_str,
+                "delay": int(row['delay_minutes']),
+                "actual": act_str,
+                "fare": round(calculated_fare, 2),
+                "crowd_level": crowd_mapping.get(pred_id, "Normal Rush Indicators"),
+                "crowd_id": pred_id,
+                "fine_advisory": fine_text,
+                "color_state": alert_color
+            })
+
         cursor.close()
         conn.close()
-        raise HTTPException(status_code=500, detail=f"Database query processing crash: {str(query_err)}")
-        
-    compiled_results = []
-    
-    for row in active_records:
-        # Psycopg3 wraps dictionary results cleanly. Let's isolate properties safely.
-        act_dep_obj = row['actual_departure']
-        
-        # Handle cases where Postgres returns time objects or raw strings
-        if isinstance(act_dep_obj, str):
-            # Parse string time format if necessary
-            h, m, _ = map(int, act_dep_obj.split(':'))
-            act_str = f"{h:02d}:{m:02d}"
-        else:
-            h, m = act_dep_obj.hour, act_dep_obj.minute
-            act_str = act_dep_obj.strftime("%H:%M")
-            
-        sched_dep_obj = row['scheduled_departure']
-        sched_str = sched_dep_obj if isinstance(sched_dep_obj, str) else sched_dep_obj.strftime("%H:%M")
+        return {"meta": {"query_time": time_str, "route": "MAJN -> CLT"}, "trains": compiled_results}
 
-        # Feed parameters directly into loaded Random Forest model
-        features = np.array([[h, m, day_of_week, is_holiday]])
-        pred_id = int(loaded_classifier.predict(features))
-        crowd_mapping = {0: "Low Density Available", 1: "Medium Commuter Volume", 2: "Heavy Rush"}
-        
-        # Automated Fare Mapping Script Calculation Engine
-        calculated_fare = float(row['distance_km'] * row['base_fare_per_km'])
-        
-        # Proactive Fine Protection Legal Mapping Logic Block
-        category = row['category_name']
-        if row['is_specialty_unreserved']:
-            fine_text = "FINE PROTECTION SECURED: Fully Unreserved Train Configuration. Board cleanly with basic General class paper tickets."
-            alert_color = "GREEN"
-        elif category == "Ordinary":
-            fine_text = "COMPLIANCE NOTICE: Valid exclusively for basic Ordinary Counter ticket. Express/Superfast ticket categories not required."
-            alert_color = "AMBER"
-        elif category == "Express":
-            fine_text = "TTE PENALTY NOTICE: Express Ticket Mandatory. Holding an Ordinary ticket will result in static penalty rules."
-            alert_color = "ORANGE"
-        elif category == "Superfast":
-            fine_text = "CRITICAL LEGAL ADVISORY: Superfast Supplementary Surcharge Required. Boarding with lower tier ticket categories results in an automatic fine."
-            alert_color = "RED"
-        else:
-            fine_text = "Standard documentation compliance required."
-            alert_color = "GRAY"
-            
-        compiled_results.append({
-            "train_no": row['train_no'],
-            "train_name": row['train_name'],
-            "category": category,
-            "is_specialty": row['is_specialty_unreserved'],
-            "distance": float(row['distance_km']),
-            "scheduled": sched_str,
-            "delay": row['delay_minutes'],
-            "actual": act_str,
-            "fare": round(calculated_fare, 2),
-            "crowd_level": crowd_mapping[pred_id],
-            "crowd_id": pred_id,
-            "fine_advisory": fine_text,
-            "color_state": alert_color
-        })
-        
-    cursor.close()
-    conn.close()
-    return {"meta": {"query_time": time_str, "route": "MAJN -> CLT"}, "trains": compiled_results}
+    except Exception as raw_error:
+        # Emergency Safe Catch: Output the precise trace back to the UI grid instead of printing blank 500 blocks
+        error_traceback = traceback.format_exc()
+        return {
+            "meta": {"query_time": "00:00:00", "route": "ERROR CAPTURED BLOCK"},
+            "trains": [],
+            "error_diagnostics": {
+                "message": str(raw_error),
+                "trace": error_traceback
+            }
+        }
 
-# Mount lightweight web UI directory natively to deliver fast page views
+# Mount static frontend components cleanly below API logic layout
 app.mount("/", StaticFiles(directory="static", html=True), name="static")
