@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RailSight Dashboard | Live Corridor Telemetry</title>
+    <title>RailSight Dashboard | Live Track & Telemetry</title>
     <style>
         :root {
             --dark-bg: #0b0f19;
@@ -19,6 +19,7 @@
         }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
         body { background-color: var(--dark-bg); color: var(--text-white); padding: 15px; }
+        
         .navbar-wrapper {
             background-color: var(--surface-card);
             padding: 20px;
@@ -34,6 +35,7 @@
         .branding h1 { font-size: 1.6rem; letter-spacing: 1px; }
         .branding h1 span { color: var(--sky-accent); }
         .branding p { font-size: 0.8rem; color: var(--text-slate); margin-top: 2px; }
+        
         .time-control-deck span {
             background: #0b0f19;
             padding: 8px 12px;
@@ -43,6 +45,7 @@
             color: var(--sky-accent);
             font-family: monospace;
         }
+        
         .telemetry-bar {
             background: rgba(56, 189, 248, 0.1);
             padding: 10px 15px;
@@ -53,11 +56,13 @@
             font-size: 0.85rem;
             border-left: 4px solid var(--sky-accent);
         }
+        
         .timeline-cards-container {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
             gap: 20px;
         }
+        
         .card {
             background: var(--surface-card);
             border-radius: 8px;
@@ -68,9 +73,11 @@
             box-shadow: 0 4px 10px rgba(0,0,0,0.4);
             margin-bottom: 10px;
         }
+        
         .card-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
-        .card-top h3 { font-size: 1.15rem; color: #fff; }
-        .train-id-badge { background: #0b0f19; padding: 2px 6px; font-size: 0.75rem; border-radius: 4px; color: var(--sky-accent); }
+        .card-top h3 { font-size: 1.2rem; color: #fff; font-weight: bold; }
+        .train-id-badge { background: #0b0f19; padding: 2px 6px; font-size: 0.75rem; border-radius: 4px; color: var(--sky-accent); font-weight: bold; }
+        
         .specialty-tag {
             background: var(--clr-green);
             color: #000;
@@ -81,16 +88,36 @@
             margin-top: 4px;
             display: inline-block;
         }
-        .metrics-row { display: flex; justify-content: space-between; background: #0b0f19; padding: 8px; border-radius: 6px; margin: 12px 0; }
+        
+        .metrics-row { display: flex; justify-content: space-between; background: #0b0f19; padding: 8px; border-radius: 6px; margin: 10px 0; }
         .metric-cell span { display: block; font-size: 0.7rem; color: var(--text-slate); }
-        .metric-cell strong { font-size: 1rem; }
+        .metric-cell strong { font-size: 0.95rem; }
+        
         .fare-text { font-size: 0.95rem; margin-bottom: 10px; }
         .fare-text span { font-weight: bold; color: var(--sky-accent); }
-        .crowd-indicator { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; background: #0b0f19; padding: 6px; border-radius: 4px; margin-bottom: 14px; }
-        .dot { width: 8px; height: 8px; border-radius: 50%; }
+        
+        .crowd-indicator { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; background: #0b0f19; padding: 8px; border-radius: 4px; margin-bottom: 12px; border-left: 3px solid var(--sky-accent); }
+        .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
         .dot-green { background: var(--clr-green); }
         .dot-amber { background: var(--clr-amber); }
         .dot-red { background: var(--clr-red); }
+
+        /* Mobile-Optimized High-Contrast Vertical Tracker */
+        .live-tracker-panel { background: #0b0f19; padding: 12px; border-radius: 6px; margin-bottom: 14px; border: 1px solid #1e293b; }
+        .tracker-header { display: flex; justify-content: space-between; font-size: 0.78rem; color: var(--text-slate); margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid #1e293b; }
+        
+        .vertical-track { position: relative; padding-left: 20px; margin-top: 5px; }
+        .vertical-track::before { content: ''; position: absolute; left: 4px; top: 5px; bottom: 5px; width: 2px; background: #1e293b; }
+        
+        .track-node { position: relative; font-size: 0.8rem; color: var(--text-slate); margin-bottom: 8px; padding-left: 5px; }
+        .track-node::before { content: ''; position: absolute; left: -19px; top: 4px; width: 8px; height: 8px; background: #475569; border-radius: 50%; }
+        
+        .track-node.passed { color: #e2e8f0; }
+        .track-node.passed::before { background: var(--sky-accent); }
+        
+        .track-node.current-location { color: var(--clr-red); font-weight: bold; }
+        .track-node.current-location::before { background: var(--clr-red); box-shadow: 0 0 8px var(--clr-red); width: 10px; height: 10px; left: -20px; top: 3px; }
+
         .advisory { padding: 10px; border-radius: 4px; font-size: 0.78rem; font-weight: bold; line-height: 1.3; }
         .alert-GREEN { background: rgba(16,185,129,0.15); border: 1px solid var(--clr-green); color: #34d399; }
         .alert-ORANGE { background: rgba(234, 88, 12, 0.15); border: 1px solid var(--clr-orange); color: #fb923c; }
@@ -101,7 +128,7 @@
     <header class="navbar-wrapper">
         <div class="branding">
             <h1>RAIL<span>SIGHT</span></h1>
-            <p>Independent Operational Intelligence for Unreserved Commuters</p>
+            <p>Independent Operational Intelligence & Live Status Corridor Tracker</p>
         </div>
         <div class="time-control-deck">
             <span id="live-clock-badge">Initializing System Sync...</span>
@@ -111,12 +138,12 @@
     <main class="content-viewport">
         <div class="telemetry-bar">
             <span>Corridor Path: Mangaluru Central (MAJN) → Kozhikode Main (CLT)</span>
-            <span style="color:var(--clr-amber); font-weight:bold;">🕒 3HR LIVE VIEW: Displaying Next Scheduled Corridor Fleets</span>
+            <span style="color:var(--sky-accent); font-weight:bold;">🛰️ GPS LIVE POSITION LINK ACTIVE</span>
         </div>
 
         <div class="timeline-cards-container">
             
-            <!-- 1. ANTYODAYA EXPRESS DEDICATED SPECIFICATION CARD -->
+            <!-- 1. ANTYODAYA EXPRESS SPECIFICATION CARD -->
             <div class="card">
                 <div class="card-top">
                     <div>
@@ -126,16 +153,33 @@
                     <span class="train-id-badge">#12836</span>
                 </div>
                 <div class="metrics-row">
-                    <div class="metric-cell"><span>Required UTS Ticket Class</span><strong style="color:var(--sky-accent);">II ANTYODAYA (Unreserved SF)</strong></div>
-                    <div class="metric-cell"><span>Actual Departure Window</span><strong>Next Run: 13:30</strong> <span style="color:var(--clr-red); font-size:0.7rem;">(+20m Delay)</span></div>
+                    <div class="metric-cell"><span>Required UTS Ticket Class</span><strong style="color:var(--sky-accent);">II ANTYODAYA (SF Unreserved)</strong></div>
+                    <div class="metric-cell"><span>Actual Departure</span><strong>13:30</strong> <span style="color:var(--clr-red); font-size:0.7rem;">(+20m Delay)</span></div>
                 </div>
-                <p class="fare-text">Dedicated Counter Fare (15% Superfast Surcharge Added): <span>₹187.85</span></p>
+                <p class="fare-text">Dedicated Counter Fare: <span>₹187.85</span></p>
+                
+                <!-- AI Crowd Tracker Module -->
                 <div class="crowd-indicator">
                     <div class="dot dot-green"></div>
                     <span>AI Crowd Forecast: <strong>Available Seating Tiers Present</strong></span>
                 </div>
+
+                <!-- LIVE TRACK MY TRAIN PANEL -->
+                <div class="live-tracker-panel">
+                    <div class="tracker-header">
+                        <span>Status: <strong style="color:var(--clr-green);">In Transit</strong></span>
+                        <span>Next Stop: <strong>Kannur (CAN)</strong></span>
+                    </div>
+                    <div class="vertical-track">
+                        <div class="track-node passed">Departed: Mangaluru Central (MAJN) - 13:30</div>
+                        <div class="track-node passed">Passed: Kasaragod (KGQ) - 14:15</div>
+                        <div class="track-node current-location">📍 Current Location: Approaching Kannur (CAN)</div>
+                        <div class="track-node">Scheduled: Kozhikode Main (CLT) - 16:20</div>
+                    </div>
+                </div>
+
                 <div class="advisory alert-GREEN">
-                    FINE PROTECTION SECURED: This fleet features cushioned berths mimicking a sleeper layout, but contains NO reserved sleeper coaches. You cannot board using standard General tickets. You must hold an explicit "II ANTYODAYA" counter ticket to avoid TTE penalization.
+                    FINE PROTECTION SECURED: Fully unreserved layout. Board safely ONLY with a specific "II ANTYODAYA" counter ticket. Standard general tickets will face TTE penalties.
                 </div>
             </div>
 
@@ -150,50 +194,9 @@
                 </div>
                 <div class="metrics-row">
                     <div class="metric-cell"><span>Required UTS Ticket Class</span><strong>General Second Class (2S)</strong></div>
-                    <div class="metric-cell"><span>Actual Departure Window</span><strong>Next Run: 14:45</strong> <span style="color:var(--clr-green); font-size:0.7rem;">(On Time)</span></div>
+                    <div class="metric-cell"><span>Actual Departure</span><strong>14:45</strong> <span style="color:var(--clr-green); font-size:0.7rem;">(On Time)</span></div>
                 </div>
-                <p class="fare-text">Standard Mail/Express General Fare: <span>₹143.65</span></p>
+                <p class="fare-text">Standard General Fare: <span>₹143.65</span></p>
+                
+                <!-- AI Crowd Tracker Module -->
                 <div class="crowd-indicator">
-                    <div class="dot dot-amber"></div>
-                    <span>AI Crowd Forecast: <strong>Moderate Commuter Standee Load</strong></span>
-                </div>
-                <div class="advisory alert-GREEN">
-                    FINE PROTECTION SECURED: Fully Unreserved Train Layout. Board cleanly using basic, standard General Class tickets from the counter or UTS app.
-                </div>
-            </div>
-
-            <!-- 3. AMRIT BHARAT EXPRESS CARD -->
-            <div class="card">
-                <div class="card-top">
-                    <div>
-                        <h3>Amrit Bharat Express</h3>
-                        <div><span class="specialty-tag">UNRESERVED / SL HYBRID RAKE</span></div>
-                    </div>
-                    <span class="train-id-badge">#13434</span>
-                </div>
-                <div class="metrics-row">
-                    <div class="metric-cell"><span>Required UTS Ticket Class</span><strong>Superfast General (2S)</strong></div>
-                    <div class="metric-cell"><span>Actual Departure Window</span><strong>Next Run: 15:30</strong> <span style="color:var(--clr-red); font-size:0.7rem;">(+20m Delay)</span></div>
-                </div>
-                <p class="fare-text">Superfast General Counter Fare: <span>₹187.85</span></p>
-                <div class="crowd-indicator">
-                    <div class="dot dot-red"></div>
-                    <span>AI Crowd Forecast: <strong>Heavy Volume - Expect High Density</strong></span>
-                </div>
-                <div class="advisory alert-ORANGE">
-                    TTE PENALTY ALERT: Ensure your counter or UTS ticket explicitly includes the "Superfast Surcharge". Boarding with a basic Ordinary or Passenger ticket incurs an automatic structural penalty fee.
-                </div>
-            </div>
-
-        </div>
-    </main>
-
-    <script>
-        // Ticking system clock script syncing automatically with local hardware time
-        setInterval(() => {
-            const now = new Date();
-            document.getElementById("live-clock-badge").innerHTML = "Live IST Sync: " + now.toLocaleTimeString();
-        }, 1000);
-    </script>
-</body>
-</html>
