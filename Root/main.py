@@ -15,7 +15,7 @@ import traceback
 app = FastAPI(
     title="RailSight Ultimate Gateway",
     description="Production Router Core matching Python 3.14.3 constraints",
-    version="1.1.0"
+    version="1.2.0"
 )
 
 # Cross-Origin Isolation configuration for frontend mounting maps
@@ -39,7 +39,6 @@ loaded_classifier = joblib.load(MODEL_PATH)
 def fetch_db_pool_connection():
     if not DATABASE_URL:
         raise ValueError("CRITICAL INITIALIZATION CRASH: The DATABASE_URL secret parameter is empty on Render settings.")
-    # Append required SSL flag to authorize handshake safely across Neon nodes
     cleaned_url = DATABASE_URL
     if "sslmode" not in cleaned_url:
         cleaned_url += "&sslmode=require" if "?" in cleaned_url else "?sslmode=require"
@@ -49,9 +48,11 @@ def fetch_db_pool_connection():
 async def get_transit_window(time_now: str = Query(None, description="ISO input window index profile")):
     try:
         if not time_now:
-            now_dt = datetime.datetime.now()
-            time_str = now_dt.strftime("%H:%M:%S")
-            current_date = now_dt.date()
+            utc_now = datetime.datetime.now(datetime.timezone.utc)
+            ist_offset = datetime.timedelta(hours=5, minutes=30)
+            ist_now = utc_now + ist_offset
+            time_str = ist_now.strftime("%H:%M:%S")
+            current_date = ist_now.date()
         else:
             if len(time_now.split(':')) == 2:
                 time_now = f"{time_now}:00"
@@ -62,11 +63,10 @@ async def get_transit_window(time_now: str = Query(None, description="ISO input 
         day_of_week = current_date.weekday()
         is_holiday = 1 if day_of_week == 6 else 0
 
-        # Boot db session context safely
         conn = fetch_db_pool_connection()
         cursor = conn.cursor()
 
-        # Target Query Layout: Clean positional parameters matching psycopg v3 spec layout
+        # Clean positional parameters matching psycopg v3 spec layout
         query = """
             SELECT 
                 s.schedule_id, s.train_no, m.train_name, c.category_name, 
@@ -87,13 +87,11 @@ async def get_transit_window(time_now: str = Query(None, description="ISO input 
         compiled_results = []
 
         for row in active_records:
-            # Safe string casting conversions to protect against datetime data parsing bugs
             act_dep_val = row['actual_departure']
             if hasattr(act_dep_val, 'hour'):
                 h, m = act_dep_val.hour, act_dep_val.minute
                 act_str = act_dep_val.strftime("%H:%M")
             else:
-                # Fallback string isolation layer splitter
                 time_parts = str(act_dep_val).split(':')
                 h, m = int(time_parts[0]), int(time_parts[1])
                 act_str = f"{h:02d}:{m:02d}"
@@ -103,13 +101,16 @@ async def get_transit_window(time_now: str = Query(None, description="ISO input 
 
             # Trigger lightweight AI predictive classification row array mappings
             features = np.array([[h, m, day_of_week, is_holiday]], dtype=np.int32)
-            pred_id = int(loaded_classifier.predict(features)[0])
-            crowd_mapping = {0: "Low Density Available", 1: "Medium Commuter Volume", 2: "Heavy Rush"}
+            pred_id = int(loaded_classifier.predict(features))
+            crowd_mapping = {0: "Low Density Available", 1: "Medium Commuter Volume", 2: "Heavy Rush - Expect Crowding"}
 
             calculated_fare = float(row['distance_km']) * float(row['base_fare_per_km'])
             category = str(row['category_name'])
+            
+            # Robust type-agnostic mapping logic check for boolean or string-based Postgres indicators
+            is_specialty_flag = str(row['is_specialty_unreserved']).lower() in ['true', '1', 't', 'yes']
 
-            if row['is_specialty_unreserved']:
+            if is_specialty_flag:
                 fine_text = "FINE PROTECTION SECURED: Fully Unreserved Train Configuration. Step directly inside with common General Ticket."
                 alert_color = "GREEN"
             elif category == "Ordinary":
@@ -129,7 +130,7 @@ async def get_transit_window(time_now: str = Query(None, description="ISO input 
                 "train_no": int(row['train_no']),
                 "train_name": str(row['train_name']),
                 "category": category,
-                "is_specialty": bool(row['is_specialty_unreserved']),
+                "is_specialty": is_specialty_flag,
                 "distance": float(row['distance_km']),
                 "scheduled": sched_str,
                 "delay": int(row['delay_minutes']),
@@ -146,7 +147,6 @@ async def get_transit_window(time_now: str = Query(None, description="ISO input 
         return {"meta": {"query_time": time_str, "route": "MAJN -> CLT"}, "trains": compiled_results}
 
     except Exception as raw_error:
-        # Emergency Safe Catch: Output the precise trace back to the UI grid instead of printing blank 500 blocks
         error_traceback = traceback.format_exc()
         return {
             "meta": {"query_time": "00:00:00", "route": "ERROR CAPTURED BLOCK"},
