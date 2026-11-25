@@ -4,7 +4,7 @@
 document.addEventListener("DOMContentLoaded", () => {
     const masterCorridorFleets = [
         {
-            no: 12836, name: "Antyodaya Express", tier: "Superfast", dep: "04:15", delay: "15m Delay", fare: 187.86, badge: "II ANTYODAYA FARE RAKE", badgeBg: "var(--sky-accent)",
+            no: 12836, name: "Antyodaya Express", tier: "Superfast", dep: "04:15", delay: "15m Delay", fare: 187.85, badge: "II ANTYODAYA FARE RAKE", badgeBg: "var(--sky-accent)",
             crowd: "Available Seating Tiers Present", dot: "green", alert: "GREEN", startMin: 255, endMin: 442,
             adv: "FINE PROTECTION SECURED: Board safely ONLY with a specific 'II ANTYODAYA' counter ticket.",
             nodes: [ {n: "MAJN (04:15)", m: 255}, {n: "KGQ (04:58)", m: 298}, {n: "CAN (06:12)", m: 372}, {n: "CLT (07:22)", m: 442} ]
